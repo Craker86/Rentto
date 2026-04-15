@@ -8,8 +8,8 @@ const geistSans = Geist({
 });
 
 export const metadata = {
-  title: "AlqPago - Paga tu alquiler fácil",
-  description: "La app para pagar tu alquiler en Venezuela",
+  title: "Rentto - Paga tu alquiler fácil",
+description: "La app para pagar tu alquiler en Venezuela",
 };
 
 export default function RootLayout({ children }) {

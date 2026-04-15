@@ -62,9 +62,9 @@ export default function Login() {
         {/* LOGO Y TITULO */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-emerald-700 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto">
-            AP
+            R
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mt-4">AlqPago</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mt-4">Rentto</h1>
           <p className="text-sm text-gray-500 mt-1">
             {esRegistro ? "Crea tu cuenta" : "Inicia sesión"}
           </p>
