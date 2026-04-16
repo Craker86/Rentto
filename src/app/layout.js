@@ -15,6 +15,12 @@ description: "La app para pagar tu alquiler en Venezuela",
 export default function RootLayout({ children }) {
   return (
     <html lang="es" className={`${geistSans.variable} h-full antialiased`}>
+  <head>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#065f46" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  </head><script dangerouslySetInnerHTML={{__html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`}} />
       <body className="min-h-full flex flex-col font-sans">
 
         {/* CONTENIDO DE LA PAGINA - cada page.js se renderiza aqui */}
