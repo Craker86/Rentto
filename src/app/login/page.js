@@ -5,26 +5,20 @@ import { supabase } from "../lib/supabase";
 import { useRouter } from "next/navigation";
 
 export default function Login() {
-  // useRouter nos permite navegar a otra pagina despues del login
   const router = useRouter();
-
-  // Estados para los campos del formulario
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // Estado para alternar entre login y registro
+  const [nombre, setNombre] = useState("");
+  const [rol, setRol] = useState("inquilino");
   const [esRegistro, setEsRegistro] = useState(false);
-  // Estado para mostrar mensajes de error o exito
   const [mensaje, setMensaje] = useState("");
-  // Estado para saber si esta procesando
   const [cargando, setCargando] = useState(false);
 
-  // Funcion que se ejecuta al enviar el formulario
   async function handleSubmit(e) {
     e.preventDefault();
     setCargando(true);
     setMensaje("");
 
-    // VALIDACIONES
     if (!email.trim()) {
       setMensaje("Error: Ingresa tu correo electrónico");
       setCargando(false);
@@ -41,32 +35,53 @@ export default function Login() {
       setMensaje("Error: La contraseña debe tener mínimo 6 caracteres");
       setCargando(false);
       return;
-    } 
+    }
 
     if (esRegistro) {
-      // REGISTRO - crear cuenta nueva
-      const { error } = await supabase.auth.signUp({
+      if (!nombre.trim()) {
+        setMensaje("Error: Ingresa tu nombre");
+        setCargando(false);
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
       if (error) {
-       setMensaje("Error: " + (error.message === "Invalid login credentials" ? "Correo o contraseña incorrectos" : error.message));
+        setMensaje("Error: " + error.message);
       } else {
+        // Crear el perfil con el rol seleccionado
+        if (data.user) {
+          await supabase.from("perfiles").insert({
+            id: data.user.id,
+            rol: rol,
+            nombre: nombre,
+          });
+        }
         setMensaje("Cuenta creada. Revisa tu email para confirmar.");
       }
     } else {
-      // LOGIN - iniciar sesion
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-      setMensaje("Error: " + (error.message === "Invalid login credentials" ? "Correo o contraseña incorrectos" : error.message));
+        setMensaje("Error: " + (error.message === "Invalid login credentials" ? "Correo o contraseña incorrectos" : error.message));
       } else {
-        // Si el login fue exitoso, ir a la pantalla principal
-        router.push("/dashboard");
+        // Verificar el rol del usuario para redirigir
+        const { data: perfil } = await supabase
+          .from("perfiles")
+          .select("rol")
+          .single();
+
+        if (perfil?.rol === "propietario") {
+          router.push("/propietario");
+        } else {
+          router.push("/dashboard");
+        }
       }
     }
 
@@ -77,7 +92,6 @@ export default function Login() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
 
-        {/* LOGO Y TITULO */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-emerald-700 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto">
             R
@@ -88,11 +102,58 @@ export default function Login() {
           </p>
         </div>
 
-        {/* FORMULARIO */}
         <div className="bg-white border border-gray-200 rounded-2xl p-6">
           <div className="space-y-4">
 
-            {/* CAMPO EMAIL */}
+            {/* SELECTOR DE ROL - solo en registro */}
+            {esRegistro && (
+              <div>
+                <label className="text-xs font-medium text-gray-700 block mb-2">
+                  ¿Qué eres?
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setRol("inquilino")}
+                    className={`py-3 rounded-xl text-sm font-medium transition-all ${
+                      rol === "inquilino"
+                        ? "bg-emerald-700 text-white"
+                        : "bg-gray-50 text-gray-600 border border-gray-200"
+                    }`}
+                  >
+                    🏠 Inquilino
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRol("propietario")}
+                    className={`py-3 rounded-xl text-sm font-medium transition-all ${
+                      rol === "propietario"
+                        ? "bg-emerald-700 text-white"
+                        : "bg-gray-50 text-gray-600 border border-gray-200"
+                    }`}
+                  >
+                    🔑 Propietario
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* CAMPO NOMBRE - solo en registro */}
+            {esRegistro && (
+              <div>
+                <label className="text-xs font-medium text-gray-700 block mb-1">
+                  Nombre completo
+                </label>
+                <input
+                  type="text"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  placeholder="Tu nombre"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+            )}
+
             <div>
               <label className="text-xs font-medium text-gray-700 block mb-1">
                 Correo electrónico
@@ -106,7 +167,6 @@ export default function Login() {
               />
             </div>
 
-            {/* CAMPO PASSWORD */}
             <div>
               <label className="text-xs font-medium text-gray-700 block mb-1">
                 Contraseña
@@ -120,14 +180,12 @@ export default function Login() {
               />
             </div>
 
-            {/* MENSAJE DE ERROR O EXITO */}
             {mensaje && (
               <p className={`text-xs text-center ${mensaje.includes("Error") ? "text-red-500" : "text-emerald-600"}`}>
                 {mensaje}
               </p>
             )}
 
-            {/* BOTON ENVIAR */}
             <button
               onClick={handleSubmit}
               disabled={cargando || !email || !password}
@@ -147,7 +205,6 @@ export default function Login() {
           </div>
         </div>
 
-        {/* ALTERNAR ENTRE LOGIN Y REGISTRO */}
         <p className="text-center text-sm text-gray-500 mt-4">
           {esRegistro ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}{" "}
           <button
