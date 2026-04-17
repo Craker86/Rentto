@@ -9,15 +9,14 @@ export default function Perfil() {
   const router = useRouter();
   const [usuario, setUsuario] = useState(null);
   const [cargando, setCargando] = useState(true);
-  const [tasa, setTasa] = useState(0);
 
-  const opciones = [
-    { icono: "👤", nombre: "Datos personales", color: "bg-blue-100" },
-    { icono: "💳", nombre: "Métodos de pago", color: "bg-emerald-100" },
-    { icono: "📄", nombre: "Recibos y facturas", color: "bg-amber-100" },
-    { icono: "🔔", nombre: "Notificaciones", color: "bg-pink-100" },
-    { icono: "🔒", nombre: "Seguridad", color: "bg-purple-100" },
-    { icono: "⚙️", nombre: "Configuración", color: "bg-gray-100" },
+ const opciones = [
+    { icono: "👤", nombre: "Datos personales", color: "bg-blue-100", ruta: "/datos-personales" },
+    { icono: "💳", nombre: "Métodos de pago", color: "bg-emerald-100", ruta: "/metodos-pago" },
+    { icono: "📄", nombre: "Recibos y facturas", color: "bg-amber-100", ruta: "/recibos" },
+    { icono: "🔔", nombre: "Notificaciones", color: "bg-pink-100", ruta: "/notificaciones" },
+    { icono: "🔒", nombre: "Seguridad", color: "bg-purple-100", ruta: "/seguridad" },
+    { icono: "⚙️", nombre: "Configuración", color: "bg-gray-100", ruta: "/configuracion" },
   ];
 
   useEffect(() => {
@@ -80,7 +79,8 @@ export default function Perfil() {
 
       <div className="mt-6">
         {opciones.map((opcion) => (
-          <div
+          <Link
+            href={opcion.ruta}
             key={opcion.nombre}
             className="flex items-center gap-3 py-3.5 border-b border-gray-100 cursor-pointer"
           >
@@ -91,7 +91,7 @@ export default function Perfil() {
               {opcion.nombre}
             </span>
             <span className="text-gray-400 text-sm">›</span>
-          </div>
+          </Link>
         ))}
       </div>
 <Link

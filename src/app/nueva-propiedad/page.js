@@ -17,6 +17,7 @@ export default function NuevaPropiedad() {
   const [diaCorte, setDiaCorte] = useState("15");
   const [fechaFin, setFechaFin] = useState("");
   const [ajuste, setAjuste] = useState("Anclado al BCV");
+  const [telefono, setTelefono] = useState("");
   const [fotos, setFotos] = useState([]);
   const [previews, setPreviews] = useState([]);
 
@@ -80,6 +81,7 @@ export default function NuevaPropiedad() {
       dia_corte: Number(diaCorte),
       fecha_fin_contrato: fechaFin || null,
      clausula_ajuste: ajuste,
+     telefono: telefono,
       fotos: fotosUrls,
     });
 
@@ -128,6 +130,19 @@ export default function NuevaPropiedad() {
             value={direccion}
             onChange={(e) => setDireccion(e.target.value)}
             placeholder="Ej: Av. Libertador, Chacao, Caracas"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500"
+          />
+        </div>
+        {/* TELEFONO */}
+        <div>
+          <label className="text-xs font-medium text-gray-700 block mb-1">
+            Tu WhatsApp (con código de país)
+          </label>
+          <input
+            type="text"
+            value={telefono}
+            onChange={(e) => setTelefono(e.target.value)}
+            placeholder="Ej: 584121234567"
             className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500"
           />
         </div>

@@ -143,7 +143,10 @@ export default function Propiedades() {
                   <span className="text-xs text-gray-500">{prop.propietario_nombre}</span>
                 </div>
 
-               <a href={"https://wa.me/" + (prop.telefono || "") + "?text=Hola, vi tu propiedad " + prop.nombre + " en Rentto y me interesa."} target="_blank" className="block w-full py-2.5 mt-3 bg-emerald-700 text-white rounded-xl text-xs font-semibold hover:bg-emerald-800 text-center">Contactar por WhatsApp</a>
+                {/* BOTON CONTACTAR */}
+                <button className="w-full py-2.5 mt-3 bg-emerald-700 text-white rounded-xl text-xs font-semibold hover:bg-emerald-800 transition-colors">
+                  Contactar propietario
+                </button>
               </div>
             </div>
           ))
