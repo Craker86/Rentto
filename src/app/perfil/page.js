@@ -9,8 +9,9 @@ export default function Perfil() {
   const router = useRouter();
   const [usuario, setUsuario] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [rol, setRol] = useState("");
 
- const opciones = [
+  const opciones = [
     { icono: "👤", nombre: "Datos personales", color: "bg-blue-100", ruta: "/datos-personales" },
     { icono: "💳", nombre: "Métodos de pago", color: "bg-emerald-100", ruta: "/metodos-pago" },
     { icono: "📄", nombre: "Recibos y facturas", color: "bg-amber-100", ruta: "/recibos" },
@@ -24,18 +25,20 @@ export default function Perfil() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push("/login"); return; }
 
-      // Obtener los datos del usuario autenticado
       setUsuario({
         email: session.user.email,
         id: session.user.id,
         creado: new Date(session.user.created_at).toLocaleDateString("es-VE"),
       });
+
+      const { data: perfil } = await supabase.from("perfiles").select("rol").eq("id", session.user.id).single();
+      if (perfil) setRol(perfil.rol);
+
       setCargando(false);
     }
     cargar();
   }, []);
 
-  // Funcion para cerrar sesion
   async function cerrarSesion() {
     await supabase.auth.signOut();
     router.push("/login");
@@ -49,7 +52,6 @@ export default function Perfil() {
     );
   }
 
-  // Obtener las iniciales del email (antes del @)
   const nombre = usuario.email.split("@")[0];
   const iniciales = nombre.slice(0, 2).toUpperCase();
 
@@ -62,6 +64,9 @@ export default function Perfil() {
         </div>
         <p className="text-lg font-semibold text-gray-900 mt-3">{nombre}</p>
         <p className="text-xs text-gray-500 mt-0.5">{usuario.email}</p>
+        <span className="text-[10px] bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-medium mt-2 inline-block">
+          {rol === "propietario" ? "Propietario" : "Inquilino"}
+        </span>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl p-4 mt-6">
@@ -94,13 +99,16 @@ export default function Perfil() {
           </Link>
         ))}
       </div>
-<Link
-        href="/propietario"
-        className="block w-full py-3 mt-6 text-sm text-center text-emerald-700 font-medium border border-emerald-200 rounded-xl hover:bg-emerald-50 transition-colors"
-      >
-        Panel del propietario →
-      </Link>
-      {/* BOTON CERRAR SESION - ahora funcional */}
+
+      {rol === "propietario" && (
+        <Link
+          href="/propietario"
+          className="block w-full py-3 mt-6 text-sm text-center text-emerald-700 font-medium border border-emerald-200 rounded-xl hover:bg-emerald-50 transition-colors"
+        >
+          Panel del propietario →
+        </Link>
+      )}
+
       <button
         onClick={cerrarSesion}
         className="w-full py-3 mt-6 text-sm text-red-500 font-medium border border-red-200 rounded-xl hover:bg-red-50 transition-colors"
