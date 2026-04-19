@@ -1,8 +1,14 @@
 import { Resend } from "resend";
 
-const resend = new Resend("re_fjxitWAt_BN4GGKM5UBb28sFjA2Fx835U");
-
 export async function POST(request) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "RESEND_API_KEY no está definida. Configúrala en .env.local (desarrollo) o en las variables de entorno del proveedor (producción)."
+    );
+  }
+  const resend = new Resend(apiKey);
+
   const { monto, metodo, fecha, emailPropietario } = await request.json();
 
   const { error } = await resend.emails.send({
