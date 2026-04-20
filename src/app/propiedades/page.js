@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { supabase } from "../lib/supabase";
+import { Search, Building2, X, MessageCircle } from "lucide-react";
 
 export default function Propiedades() {
   const router = useRouter();
@@ -31,14 +31,15 @@ export default function Propiedades() {
 
   if (cargando) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-400">Cargando propiedades...</p>
+      <div className="min-h-screen bg-surface-muted flex items-center justify-center">
+        <p className="text-fg-subtle text-sm">Cargando propiedades…</p>
       </div>
     );
   }
 
   const propiedadesFiltradas = propiedades.filter((prop) => {
-    const coincideBusqueda = prop.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+    const coincideBusqueda =
+      prop.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       prop.direccion.toLowerCase().includes(busqueda.toLowerCase());
 
     if (filtro === "todas") return coincideBusqueda;
@@ -48,138 +49,179 @@ export default function Propiedades() {
     return coincideBusqueda;
   });
 
+  const filtros = [
+    { id: "todas", label: "Todas" },
+    { id: "economica", label: "Hasta $100" },
+    { id: "media", label: "$100 – $300" },
+    { id: "premium", label: "Más de $300" },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4 max-w-md mx-auto">
+    <div className="min-h-screen bg-surface-muted pb-24">
+      <div className="max-w-[480px] mx-auto px-5">
+        <header className="pt-6 pb-4">
+          <h1 className="text-2xl font-bold text-fg">Explorar</h1>
+          <p className="text-sm text-fg-muted mt-1">
+            {propiedades.length} {propiedades.length === 1 ? "propiedad disponible" : "propiedades disponibles"} en Venezuela
+          </p>
+        </header>
 
-      <h1 className="text-2xl font-bold text-gray-900">Propiedades</h1>
-      <p className="text-sm text-gray-500 mt-1">
-        {propiedades.length} disponibles en Venezuela
-      </p>
+        <div className="relative">
+          <Search
+            size={18}
+            strokeWidth={2}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-fg-subtle pointer-events-none"
+          />
+          <input
+            type="text"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Buscar por nombre o dirección…"
+            className="w-full rounded-xl border border-stroke bg-surface pl-11 pr-4 py-3.5 text-base placeholder:text-fg-subtle focus:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-200 transition"
+          />
+        </div>
 
-      <div className="mt-4">
-        <input
-          type="text"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          placeholder="Buscar por nombre o dirección..."
-          className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-white"
-        />
-      </div>
+        <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+          {filtros.map((f) => {
+            const active = filtro === f.id;
+            return (
+              <button
+                key={f.id}
+                onClick={() => setFiltro(f.id)}
+                className={`px-4 py-2 rounded-pill text-xs font-semibold whitespace-nowrap transition ${
+                  active
+                    ? "bg-brand-800 text-fg-inverse shadow-card"
+                    : "bg-surface border border-stroke text-fg-muted hover:border-brand-300"
+                }`}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
 
-      <div className="flex gap-2 mt-3 overflow-x-auto">
-        {[
-          { id: "todas", label: "Todas" },
-          { id: "economica", label: "Hasta $100" },
-          { id: "media", label: "$100 - $300" },
-          { id: "premium", label: "Más de $300" },
-        ].map((f) => (
-          <button
-            key={f.id}
-            onClick={() => setFiltro(f.id)}
-            className={`px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-              filtro === f.id
-                ? "bg-emerald-700 text-white"
-                : "bg-white border border-gray-200 text-gray-600"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex flex-col gap-3 mt-4">
-        {propiedadesFiltradas.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-400 text-sm">No se encontraron propiedades</p>
-          </div>
-        ) : (
-          propiedadesFiltradas.map((prop) => (
-            <div key={prop.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-
-              {prop.fotos && prop.fotos.length > 0 ? (
-                <img
-                  src={prop.fotos[0]}
-                  alt={prop.nombre}
-                  className="w-full h-40 object-cover cursor-pointer"
-                  onClick={() => setFotoAmpliada(prop.fotos[0])}
-                />
-              ) : (
-                <div className="w-full h-40 bg-gray-100 flex items-center justify-center">
-                  <span className="text-4xl">🏠</span>
-                </div>
-              )}
-
-              <div className="p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{prop.nombre}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{prop.direccion}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-emerald-700">${prop.monto_mensual}</p>
-                    <p className="text-[10px] text-gray-400">/mes</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 mt-3">
-                  <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded-md">
-                    Corte día {prop.dia_corte}
-                  </span>
-                  <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded-md">
-                    {prop.clausula_ajuste}
-                  </span>
-                </div>
-
-                {prop.descripcion && (
-                  <p className="text-xs text-gray-600 mt-3 leading-relaxed">{prop.descripcion}</p>
-                )}
-
-                {prop.requisitos && (
-                  <div className="mt-3 p-3 bg-amber-50 rounded-lg">
-                    <p className="text-[10px] font-semibold text-amber-800">Requisitos:</p>
-                    <p className="text-xs text-amber-700 mt-1 leading-relaxed">{prop.requisitos}</p>
-                  </div>
-                )}
-
-                {prop.fotos && prop.fotos.length > 1 && (
-                  <div className="flex gap-2 mt-3 overflow-x-auto">
-                    {prop.fotos.map((foto, i) => (
-                      <img key={i} src={foto} alt={prop.nombre} className="w-20 h-20 object-cover rounded-lg flex-shrink-0 cursor-pointer" onClick={() => setFotoAmpliada(foto)} />
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-                  <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center text-[10px] font-bold text-emerald-800">
-                    {prop.propietario_nombre ? prop.propietario_nombre[0] : "P"}
-                  </div>
-                  <span className="text-xs text-gray-500">{prop.propietario_nombre}</span>
-                </div>
-
-                <a href={"https://wa.me/" + (prop.telefono || "") + "?text=Hola, vi tu propiedad " + prop.nombre + " en Rentto y me interesa."} target="_blank" className="block w-full py-2.5 mt-3 bg-emerald-700 text-white rounded-xl text-xs font-semibold hover:bg-emerald-800 text-center">Contactar por WhatsApp</a>
-              </div>
+        <div className="flex flex-col gap-4 mt-5">
+          {propiedadesFiltradas.length === 0 ? (
+            <div className="bg-surface rounded-card shadow-card p-10 text-center">
+              <Building2 size={32} className="text-brand-300 mx-auto" strokeWidth={1.5} />
+              <p className="text-sm text-fg-muted mt-3">No se encontraron propiedades</p>
             </div>
-          ))
-        )}
+          ) : (
+            propiedadesFiltradas.map((prop) => (
+              <PropiedadCard key={prop.id} prop={prop} onPhotoClick={setFotoAmpliada} />
+            ))
+          )}
+        </div>
       </div>
 
       {fotoAmpliada && (
         <div
           onClick={() => setFotoAmpliada(null)}
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 cursor-pointer"
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 cursor-zoom-out"
         >
-          <div className="relative max-w-lg w-full">
-            <img src={fotoAmpliada} alt="Foto ampliada" className="w-full rounded-2xl" />
+          <div className="relative max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+            <img src={fotoAmpliada} alt="Foto ampliada" className="w-full rounded-2xl shadow-pop" />
             <button
               onClick={() => setFotoAmpliada(null)}
-              className="absolute top-3 right-3 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center text-sm font-bold"
+              aria-label="Cerrar"
+              className="absolute top-3 right-3 w-9 h-9 bg-black/60 text-white rounded-pill flex items-center justify-center hover:bg-black/80 transition"
             >
-              ✕
+              <X size={18} />
             </button>
           </div>
         </div>
       )}
-
     </div>
+  );
+}
+
+function PropiedadCard({ prop, onPhotoClick }) {
+  const waHref = `https://wa.me/${prop.telefono || ""}?text=${encodeURIComponent(
+    `Hola, vi tu propiedad ${prop.nombre} en Rentto y me interesa.`
+  )}`;
+
+  return (
+    <article className="bg-surface rounded-card shadow-card overflow-hidden">
+      {prop.fotos && prop.fotos.length > 0 ? (
+        <img
+          src={prop.fotos[0]}
+          alt={prop.nombre}
+          className="w-full h-44 object-cover cursor-zoom-in"
+          onClick={() => onPhotoClick(prop.fotos[0])}
+        />
+      ) : (
+        <div className="w-full h-44 bg-brand-50 flex items-center justify-center">
+          <Building2 className="text-brand-300" size={48} strokeWidth={1.5} />
+        </div>
+      )}
+
+      <div className="p-4 space-y-3">
+        <div className="flex justify-between items-start gap-3">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-fg truncate">{prop.nombre}</h3>
+            <p className="text-xs text-fg-muted mt-0.5 truncate">{prop.direccion}</p>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <p className="text-lg font-bold text-brand-700 leading-none">${prop.monto_mensual}</p>
+            <p className="text-[10px] text-fg-subtle mt-0.5">/ mes</p>
+          </div>
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
+          <span className="inline-flex items-center text-[11px] bg-brand-50 text-brand-700 px-2.5 py-1 rounded-pill font-semibold">
+            Corte día {prop.dia_corte}
+          </span>
+          {prop.clausula_ajuste && (
+            <span className="inline-flex items-center text-[11px] bg-brand-50 text-brand-700 px-2.5 py-1 rounded-pill font-semibold">
+              {prop.clausula_ajuste}
+            </span>
+          )}
+        </div>
+
+        {prop.descripcion && (
+          <p className="text-xs text-fg-muted leading-relaxed">{prop.descripcion}</p>
+        )}
+
+        {prop.requisitos && (
+          <div className="bg-warning-100 rounded-lg p-3">
+            <p className="text-[10px] font-semibold text-warning-700 uppercase tracking-wide">
+              Requisitos
+            </p>
+            <p className="text-xs text-warning-700 mt-1 leading-relaxed">{prop.requisitos}</p>
+          </div>
+        )}
+
+        {prop.fotos && prop.fotos.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {prop.fotos.map((foto, i) => (
+              <img
+                key={i}
+                src={foto}
+                alt=""
+                className="w-20 h-20 object-cover rounded-lg flex-shrink-0 cursor-zoom-in"
+                onClick={() => onPhotoClick(foto)}
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 pt-3 border-t border-stroke">
+          <div className="w-7 h-7 bg-brand-100 rounded-pill flex items-center justify-center text-xs font-bold text-brand-800">
+            {prop.propietario_nombre ? prop.propietario_nombre[0].toUpperCase() : "P"}
+          </div>
+          <span className="text-xs text-fg-muted">{prop.propietario_nombre}</span>
+        </div>
+
+        <a
+          href={waHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full py-3 bg-brand-800 text-fg-inverse rounded-pill text-xs font-semibold shadow-card hover:bg-brand-900 transition"
+        >
+          <MessageCircle size={14} strokeWidth={2.5} />
+          Contactar por WhatsApp
+        </a>
+      </div>
+    </article>
   );
 }
