@@ -16,7 +16,7 @@ export default function Login() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
-  const [rol, setRol] = useState("inquilino");
+  const [rol, setRol] = useState(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -39,6 +39,7 @@ export default function Login() {
     password === confirmPassword &&
     nombre.trim() !== "" &&
     telefono.trim() !== "" &&
+    rol !== null &&
     acceptedTerms;
   const isValid = activeTab === "login" ? loginValid : signupValid;
 
@@ -91,31 +92,38 @@ export default function Login() {
     router.push(perfil?.rol === "propietario" ? "/propietario" : "/dashboard");
   }
 
+  const submitLabel = activeTab === "login" ? "Iniciar sesión" : "Crear cuenta";
+  const submitClass = `w-full bg-brand-700 text-white rounded-pill py-3.5 font-semibold text-sm shadow-card transition ${
+    !isValid || loading
+      ? "opacity-60 cursor-not-allowed pointer-events-none"
+      : "hover:bg-brand-800"
+  }`;
+
   return (
-    <div className="min-h-screen bg-surface-muted flex items-center justify-center px-5 py-10">
-      <div className="w-full max-w-[420px]">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-5 py-10">
+      <div className="w-full max-w-md mx-auto">
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-brand-700 text-fg-inverse rounded-2xl flex items-center justify-center text-3xl font-bold mx-auto shadow-card">
+          <div className="w-24 h-24 bg-brand-700 text-white rounded-2xl flex items-center justify-center text-4xl font-bold mx-auto shadow-card">
             R
           </div>
-          <h1 className="text-2xl font-bold text-fg mt-4">Rentto</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mt-4">Rentto</h1>
         </div>
 
-        <div className="bg-surface rounded-card shadow-card overflow-hidden">
-          <div className="flex border-b border-stroke">
-            <Tab active={activeTab === "login"} onClick={() => switchTab("login")}>
+        <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+          <div className="flex">
+            <TabButton active={activeTab === "login"} onClick={() => switchTab("login")}>
               Iniciar sesión
-            </Tab>
-            <Tab active={activeTab === "signup"} onClick={() => switchTab("signup")}>
+            </TabButton>
+            <TabButton active={activeTab === "signup"} onClick={() => switchTab("signup")}>
               Crear cuenta
-            </Tab>
+            </TabButton>
           </div>
 
           <div className="p-6 space-y-4">
             <button
               type="button"
               onClick={handleOAuth}
-              className="w-full flex items-center justify-center gap-3 border border-stroke rounded-pill py-3 font-medium text-sm text-fg hover:bg-surface-subtle transition"
+              className="w-full min-h-[48px] flex items-center justify-center gap-3 border border-gray-300 bg-white text-gray-900 rounded-pill py-3 font-medium text-sm hover:bg-gray-50 transition"
             >
               <GoogleIcon />
               Continuar con Google
@@ -123,26 +131,25 @@ export default function Login() {
             <button
               type="button"
               onClick={handleOAuth}
-              className="w-full flex items-center justify-center gap-3 bg-fg text-fg-inverse rounded-pill py-3 font-medium text-sm hover:opacity-90 transition"
+              className="w-full min-h-[48px] flex items-center justify-center gap-3 bg-black text-white rounded-pill py-3 font-medium text-sm hover:bg-gray-800 transition"
             >
               <AppleIcon />
               Continuar con Apple
             </button>
 
-            <div className="relative py-2">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-stroke" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-surface px-3 text-sm text-fg-subtle">— o con email —</span>
-              </div>
+            <div className="flex items-center gap-4 my-6">
+              <hr className="flex-1 border-gray-200" />
+              <span className="text-xs text-gray-400">o con email</span>
+              <hr className="flex-1 border-gray-200" />
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {activeTab === "signup" && (
                 <>
                   <div>
-                    <label className="text-xs font-medium text-fg block mb-2">¿Qué eres?</label>
+                    <label className="text-xs font-medium text-gray-900 block mb-2">
+                      ¿Qué vienes a hacer en Rentto?
+                    </label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <RoleCard
                         Icon={Home}
@@ -167,7 +174,7 @@ export default function Login() {
                       value={nombre}
                       onChange={(e) => setNombre(e.target.value)}
                       placeholder="Tu nombre"
-                      className="w-full rounded-xl border border-stroke bg-surface px-4 py-3 text-base placeholder:text-fg-subtle focus:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-200 transition"
+                      className={inputClass}
                     />
                   </Field>
                 </>
@@ -179,14 +186,14 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@email.com"
-                  className="w-full rounded-xl border border-stroke bg-surface px-4 py-3 text-base placeholder:text-fg-subtle focus:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-200 transition"
+                  className={inputClass}
                 />
               </Field>
 
               {activeTab === "signup" && (
                 <Field label="Teléfono">
-                  <div className="flex">
-                    <span className="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-stroke bg-surface-subtle text-fg-muted text-sm font-medium">
+                  <div className="flex rounded-xl border border-gray-200 focus-within:border-brand-700 focus-within:ring-2 focus-within:ring-brand-200 transition overflow-hidden">
+                    <span className="inline-flex items-center px-3 border-r border-gray-200 bg-gray-50 text-gray-500 text-sm font-medium">
                       +58
                     </span>
                     <input
@@ -194,7 +201,7 @@ export default function Login() {
                       value={telefono}
                       onChange={(e) => setTelefono(e.target.value)}
                       placeholder="412 1234567"
-                      className="flex-1 min-w-0 rounded-r-xl border border-stroke bg-surface px-4 py-3 text-base placeholder:text-fg-subtle focus:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-200 transition"
+                      className="flex-1 min-w-0 bg-white px-4 py-3.5 text-base placeholder:text-gray-400 focus:outline-none"
                     />
                   </div>
                 </Field>
@@ -209,12 +216,15 @@ export default function Login() {
                   placeholder={activeTab === "signup" ? "Mínimo 8 caracteres" : "••••••••"}
                 />
                 {activeTab === "signup" ? (
-                  <p className="text-xs text-fg-muted mt-1.5">
+                  <p className="text-xs text-gray-500 mt-1.5">
                     Mínimo 8 caracteres, con mayúscula y número
                   </p>
                 ) : (
                   <div className="text-right mt-1.5">
-                    <a href="#" className="text-sm text-brand-700 font-medium hover:text-brand-800">
+                    <a
+                      href="#"
+                      className="text-sm text-brand-700 font-medium hover:underline"
+                    >
                       ¿Olvidaste tu contraseña?
                     </a>
                   </div>
@@ -234,20 +244,20 @@ export default function Login() {
               )}
 
               {activeTab === "signup" && (
-                <label className="flex items-start gap-2 text-sm text-fg-muted cursor-pointer">
+                <label className="flex items-start gap-2 text-sm text-gray-500 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={acceptedTerms}
                     onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 accent-brand-700"
+                    className="mt-0.5 w-4 h-4 accent-brand-700 flex-shrink-0"
                   />
                   <span>
                     Acepto los{" "}
-                    <a href="#" className="text-brand-700 hover:text-brand-800">
+                    <a href="#" className="text-brand-700 hover:underline">
                       Términos y Condiciones
                     </a>{" "}
                     y la{" "}
-                    <a href="#" className="text-brand-700 hover:text-brand-800">
+                    <a href="#" className="text-brand-700 hover:underline">
                       Política de Privacidad
                     </a>
                   </span>
@@ -257,29 +267,21 @@ export default function Login() {
               {errorMsg && (
                 <p
                   className={`text-sm text-center ${
-                    errorMsg.startsWith("Cuenta creada") ? "text-success-600" : "text-danger-600"
+                    errorMsg.startsWith("Cuenta creada") ? "text-brand-700" : "text-red-600"
                   }`}
                 >
                   {errorMsg}
                 </p>
               )}
 
-              <button
-                type="submit"
-                disabled={!isValid || loading}
-                className={`w-full bg-brand-800 text-fg-inverse rounded-pill py-3.5 font-semibold text-sm shadow-card transition ${
-                  !isValid || loading ? "opacity-60 cursor-not-allowed" : "hover:bg-brand-900"
-                }`}
-              >
-                {loading ? "Procesando..." : activeTab === "login" ? "Iniciar sesión" : "Crear cuenta"}
+              <button type="submit" disabled={!isValid || loading} className={submitClass}>
+                {loading ? "Procesando..." : submitLabel}
               </button>
             </form>
-          </div>
 
-          <div className="border-t border-stroke px-6 py-4 text-center">
-            <p className="text-sm text-fg-muted">
+            <p className="text-center text-sm text-gray-500 pt-2">
               ¿Problemas para entrar?{" "}
-              <a href="#" className="text-brand-700 font-medium hover:text-brand-800">
+              <a href="#" className="text-brand-700 font-medium hover:underline">
                 Contáctanos
               </a>
             </p>
@@ -290,15 +292,18 @@ export default function Login() {
   );
 }
 
-function Tab({ active, onClick, children }) {
+const inputClass =
+  "w-full min-h-[48px] rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-base placeholder:text-gray-400 focus:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-200 transition";
+
+function TabButton({ active, onClick, children }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex-1 py-4 text-sm font-semibold transition ${
+      className={`flex-1 py-4 text-sm border-b-2 transition ${
         active
-          ? "text-brand-700 border-b-2 border-brand-700 -mb-px"
-          : "text-fg-muted hover:text-fg"
+          ? "border-brand-700 text-brand-700 font-semibold"
+          : "border-transparent text-gray-500 hover:text-gray-900"
       }`}
     >
       {children}
@@ -309,7 +314,7 @@ function Tab({ active, onClick, children }) {
 function Field({ label, children }) {
   return (
     <div>
-      <label className="text-xs font-medium text-fg block mb-1.5">{label}</label>
+      <label className="text-xs font-medium text-gray-900 block mb-1.5">{label}</label>
       {children}
     </div>
   );
@@ -323,12 +328,12 @@ function PasswordInput({ value, onChange, show, toggle, placeholder }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-xl border border-stroke bg-surface px-4 py-3 pr-12 text-base placeholder:text-fg-subtle focus:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-200 transition"
+        className={`${inputClass} pr-12`}
       />
       <button
         type="button"
         onClick={toggle}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-muted hover:text-fg transition"
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900 transition p-1"
         aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
       >
         {show ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -342,17 +347,15 @@ function RoleCard({ Icon, title, desc, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`p-4 rounded-xl border-2 text-left transition ${
+      className={`p-5 rounded-xl border-2 text-left transition cursor-pointer ${
         active
           ? "border-brand-700 bg-brand-50"
-          : "border-stroke bg-surface hover:border-fg-subtle"
+          : "border-gray-200 bg-white hover:border-gray-300"
       }`}
     >
-      <Icon size={24} className={active ? "text-brand-700" : "text-fg-muted"} />
-      <p className={`font-semibold text-sm mt-2 ${active ? "text-brand-800" : "text-fg"}`}>
-        {title}
-      </p>
-      <p className="text-xs text-fg-muted mt-1">{desc}</p>
+      <Icon size={32} className="text-brand-700" />
+      <p className="font-bold text-sm text-gray-900 mt-3">{title}</p>
+      <p className="text-sm text-gray-500 mt-0.5">{desc}</p>
     </button>
   );
 }
