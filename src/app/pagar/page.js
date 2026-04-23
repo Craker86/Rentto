@@ -45,9 +45,15 @@ export default function Pagar() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push("/login"); return; }
 
-      const { data: prop } = await supabase
-        .from("propiedades").select("*").limit(1).single();
-      setPropiedad(prop);
+      // Propiedad vinculada al inquilino
+      const { data: vinculacion } = await supabase
+        .from("vinculaciones")
+        .select("*, propiedades(*)")
+        .eq("inquilino_id", session.user.id)
+        .eq("estado", "activo")
+        .limit(1)
+        .maybeSingle();
+      setPropiedad(vinculacion?.propiedades || null);
       setCargando(false);
     }
     cargar();
@@ -134,6 +140,36 @@ export default function Pagar() {
     return (
       <div className="min-h-screen bg-surface-muted flex items-center justify-center">
         <p className="text-fg-subtle text-sm">Cargando…</p>
+      </div>
+    );
+  }
+
+  if (!propiedad) {
+    return (
+      <div className="min-h-screen bg-surface-muted pb-24">
+        <div className="max-w-[480px] mx-auto px-5">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1 text-sm text-fg-muted hover:text-fg mt-5 mb-2 transition"
+          >
+            <ArrowLeft size={14} strokeWidth={2.25} /> Volver
+          </Link>
+          <div className="bg-surface rounded-card shadow-card p-8 text-center mt-4">
+            <div className="w-14 h-14 bg-brand-50 rounded-pill flex items-center justify-center mx-auto">
+              <ArrowLeft size={22} className="text-brand-300" strokeWidth={1.75} />
+            </div>
+            <h1 className="text-lg font-bold text-fg mt-4">Aún no estás vinculado</h1>
+            <p className="text-xs text-fg-muted mt-1 max-w-[280px] mx-auto leading-relaxed">
+              Para pagar necesitas vincularte a una propiedad con el código de tu propietario.
+            </p>
+            <Link
+              href="/vincular"
+              className="inline-flex items-center justify-center gap-2 mt-5 px-5 py-2.5 bg-brand-800 text-fg-inverse rounded-pill text-xs font-semibold shadow-card hover:bg-brand-900 transition"
+            >
+              Vincular ahora <ArrowRight size={12} strokeWidth={2.5} />
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }

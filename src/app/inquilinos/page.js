@@ -39,6 +39,7 @@ export default function Inquilinos() {
       const { data: props } = await supabase
         .from("propiedades")
         .select("*, vinculaciones(*)")
+        .eq("user_id", session.user.id)
         .order("created_at", { ascending: false });
 
       const todas = (props || []).flatMap((p) =>

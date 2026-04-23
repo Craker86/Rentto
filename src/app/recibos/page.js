@@ -18,6 +18,7 @@ export default function Recibos() {
       const { data } = await supabase
         .from("pagos")
         .select("*")
+        .eq("user_id", session.user.id)
         .eq("estado", "confirmado")
         .order("fecha_pago", { ascending: false });
       setPagos(data || []);

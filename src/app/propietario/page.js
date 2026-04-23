@@ -44,15 +44,24 @@ export default function Propietario() {
       const { data: perfil } = await supabase.from("perfiles").select("rol").eq("id", session.user.id).single();
       if (!perfil || perfil.rol !== "propietario") { router.push("/dashboard"); return; }
 
-      const { data: pagosData } = await supabase
-        .from("pagos").select("*").order("fecha_pago", { ascending: false });
-      setPagos(pagosData || []);
-
+      // Propiedades del propietario actual
       const { data: propsData } = await supabase
         .from("propiedades")
         .select("*, vinculaciones(*)")
+        .eq("user_id", session.user.id)
         .order("created_at", { ascending: false });
       setPropiedades(propsData || []);
+
+      // Pagos filtrados a las propiedades del propietario
+      const myPropIds = (propsData || []).map((p) => p.id);
+      const { data: pagosData } = myPropIds.length > 0
+        ? await supabase
+            .from("pagos")
+            .select("*")
+            .in("propiedad_id", myPropIds)
+            .order("fecha_pago", { ascending: false })
+        : { data: [] };
+      setPagos(pagosData || []);
 
       setCargando(false);
     }

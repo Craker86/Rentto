@@ -34,6 +34,7 @@ export default function Contrato() {
         const { data: props } = await supabase
           .from("propiedades")
           .select("*, vinculaciones(*)")
+          .eq("user_id", session.user.id)
           .order("created_at", { ascending: false });
 
         const todas = (props || []).flatMap((p) =>
@@ -51,11 +52,22 @@ export default function Contrato() {
         }
         setContratos(todas.map((v) => ({ ...v, inquilino: inquilinosPorId[v.inquilino_id] || null })));
       } else {
-        const { data: prop } = await supabase
-          .from("propiedades").select("*").limit(1).single();
-        const { data: pagosData } = await supabase
-          .from("pagos").select("*");
+        // Propiedad vinculada al inquilino (o null)
+        const { data: vinculacion } = await supabase
+          .from("vinculaciones")
+          .select("*, propiedades(*)")
+          .eq("inquilino_id", session.user.id)
+          .eq("estado", "activo")
+          .limit(1)
+          .maybeSingle();
+        const prop = vinculacion?.propiedades || null;
         setPropiedad(prop);
+
+        // Pagos solo del inquilino actual
+        const { data: pagosData } = await supabase
+          .from("pagos")
+          .select("*")
+          .eq("user_id", session.user.id);
         setPagos(pagosData || []);
 
         setScoring(

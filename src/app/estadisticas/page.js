@@ -26,16 +26,23 @@ export default function Estadisticas() {
         return;
       }
 
-      const { data: pagosData } = await supabase
-        .from("pagos")
-        .select("*")
-        .order("fecha_pago", { ascending: false });
-      setPagos(pagosData || []);
-
+      // Propiedades del propietario actual
       const { data: propsData } = await supabase
         .from("propiedades")
-        .select("*, vinculaciones(*)");
+        .select("*, vinculaciones(*)")
+        .eq("user_id", session.user.id);
       setPropiedades(propsData || []);
+
+      // Pagos filtrados a esas propiedades
+      const myPropIds = (propsData || []).map((p) => p.id);
+      const { data: pagosData } = myPropIds.length > 0
+        ? await supabase
+            .from("pagos")
+            .select("*")
+            .in("propiedad_id", myPropIds)
+            .order("fecha_pago", { ascending: false })
+        : { data: [] };
+      setPagos(pagosData || []);
 
       setCargando(false);
     }

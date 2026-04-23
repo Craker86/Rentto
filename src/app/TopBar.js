@@ -23,13 +23,21 @@ export default function TopBar() {
         .single();
       if (perfil?.nombre) setNombre(perfil.nombre);
 
-      // Badge: propietario ve conteo de pagos pendientes
+      // Badge: propietario ve conteo de pagos pendientes EN SUS PROPIEDADES
       if (perfil?.rol === "propietario") {
-        const { count } = await supabase
-          .from("pagos")
-          .select("*", { count: "exact", head: true })
-          .eq("estado", "pendiente");
-        if (typeof count === "number") setPendientes(count);
+        const { data: myProps } = await supabase
+          .from("propiedades")
+          .select("id")
+          .eq("user_id", session.user.id);
+        const myPropIds = (myProps || []).map((p) => p.id);
+        if (myPropIds.length > 0) {
+          const { count } = await supabase
+            .from("pagos")
+            .select("*", { count: "exact", head: true })
+            .eq("estado", "pendiente")
+            .in("propiedad_id", myPropIds);
+          if (typeof count === "number") setPendientes(count);
+        }
       }
     }
     cargar();

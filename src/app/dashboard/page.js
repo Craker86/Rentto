@@ -33,35 +33,32 @@ export default function Home() {
         setNombre(session.user.email.split("@")[0]);
       }
 
-      const { data: prop } = await supabase
-        .from("propiedades")
-        .select("*")
-        .limit(1)
-        .single();
-
-      const { data: pagosData } = await supabase
-        .from("pagos")
-        .select("*")
-        .order("fecha_pago", { ascending: false });
-
-      const { data: tasaData } = await supabase
-        .from("tasa_bcv")
-        .select("tasa")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-      if (tasaData) setTasa(tasaData.tasa);
-
+      // Propiedad vinculada al inquilino (o null si no tiene)
       const { data: vinculacion } = await supabase
         .from("vinculaciones")
         .select("*, propiedades(*)")
         .eq("inquilino_id", session.user.id)
         .eq("estado", "activo")
         .limit(1)
-        .single();
-      if (vinculacion) setPropiedad(vinculacion.propiedades);
-      setPropiedad(prop);
+        .maybeSingle();
+      setPropiedad(vinculacion?.propiedades || null);
+
+      // Pagos del inquilino actual
+      const { data: pagosData } = await supabase
+        .from("pagos")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("fecha_pago", { ascending: false });
       setPagos(pagosData || []);
+
+      const { data: tasaData } = await supabase
+        .from("tasa_bcv")
+        .select("tasa")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (tasaData) setTasa(tasaData.tasa);
+
       setCargando(false);
     }
 
@@ -92,11 +89,11 @@ export default function Home() {
             Hola{nombre ? `, ${nombre.split(" ")[0]}` : ""}
           </h1>
           <p className="text-sm text-fg-muted mt-1">
-            Tu alquiler de abril está pendiente
+            {propiedad ? "Tu alquiler de abril está pendiente" : "Vincula tu propiedad para empezar"}
           </p>
         </header>
 
-        {propiedad && (
+        {propiedad ? (
           <section className="bg-brand-800 text-fg-inverse rounded-card p-5 shadow-elevated">
             <p className="text-xs opacity-80 uppercase tracking-wide">
               Monto del mes · Abril 2026
@@ -112,21 +109,41 @@ export default function Home() {
               </span>
             </div>
           </section>
+        ) : (
+          <section className="bg-surface border border-stroke rounded-card p-6 text-center shadow-card">
+            <div className="w-12 h-12 bg-brand-50 rounded-pill flex items-center justify-center mx-auto">
+              <Plus size={22} className="text-brand-700" strokeWidth={2.25} />
+            </div>
+            <h2 className="text-sm font-semibold text-fg mt-3">
+              Aún no estás vinculado a una propiedad
+            </h2>
+            <p className="text-xs text-fg-muted mt-1 max-w-[280px] mx-auto leading-relaxed">
+              Pídele a tu propietario el código de 6 dígitos para recibir pagos, contrato y score.
+            </p>
+            <Link
+              href="/vincular"
+              className="inline-flex items-center justify-center gap-2 mt-4 px-5 py-2.5 bg-brand-800 text-fg-inverse rounded-pill text-xs font-semibold shadow-card hover:bg-brand-900 transition"
+            >
+              Vincular ahora <ArrowRight size={12} strokeWidth={2.5} />
+            </Link>
+          </section>
         )}
 
-        <div className="bg-surface border border-stroke rounded-card p-4 mt-4 flex items-center gap-3 shadow-card">
-          <div className="w-10 h-10 bg-warning-100 rounded-pill flex items-center justify-center flex-shrink-0">
-            <Zap size={18} className="text-warning-700" strokeWidth={2.25} />
+        {propiedad && (
+          <div className="bg-surface border border-stroke rounded-card p-4 mt-4 flex items-center gap-3 shadow-card">
+            <div className="w-10 h-10 bg-warning-100 rounded-pill flex items-center justify-center flex-shrink-0">
+              <Zap size={18} className="text-warning-700" strokeWidth={2.25} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-fg">
+                Paga hoy y gana 5% de descuento
+              </p>
+              <p className="text-xs text-fg-muted mt-0.5">
+                Tu propietario activó el pago anticipado
+              </p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-fg">
-              Paga hoy y gana 5% de descuento
-            </p>
-            <p className="text-xs text-fg-muted mt-0.5">
-              Tu propietario activó el pago anticipado
-            </p>
-          </div>
-        </div>
+        )}
 
         <Link
           href="/vincular"
