@@ -1,101 +1,91 @@
 # Estado del Proyecto — Rentto
 
-**Última actualización:** 23 abril 2026
+**Última actualización:** 23 abril 2026, fin de sesión
 
-## ✅ Completado hoy (23 abr) — migración total al design system
+## ✅ Completado hoy (23 abr) — día de MVP feature-complete
 
-- [x] `/pagar` tokenizado: hero brand-800, 4 métodos con iconos lucide, form pago-móvil, upload de comprobante, success state con `Check` icon
-- [x] `/datos-personales`: form de nombre/teléfono/email con inputs focus:ring
-- [x] `/metodos-pago`: 4 rails con iconos lucide y pill "Activo" tokenizado
-- [x] `/recibos` (Ingresos): lista de pagos confirmados con comprobante link y empty state
-- [x] `/notificaciones`: 4 toggles con state funcional (brand-700 activo, stroke-strong inactivo)
-- [x] `/seguridad`: form de cambio de contraseña con toggle mostrar/ocultar (Eye/EyeOff)
-- [x] `/configuracion`: lista de ajustes con valor brand-700
-- [x] `/nueva-propiedad`: form completo con upload de fotos (icono Camera, X para quitar)
-- [x] `/vincular`: código en card central con KeyRound icon, preview de propiedad con Home icon
+### Diseño
+- [x] Migración de toda la app autenticada al design system (9 pantallas: `/pagar`, `/datos-personales`, `/metodos-pago`, `/recibos`, `/notificaciones`, `/seguridad`, `/configuracion`, `/nueva-propiedad`, `/vincular`)
+- [x] Chasis unificado: TopBar sticky + NavBar role-aware con FAB central
+- [x] `/propietario` rebuilt como command-center (hero de cobrado/esperado, alertas accionables, quick actions, próximos cobros)
+- [x] Nuevas rutas: `/inquilinos` (directorio expandible), `/estadisticas` (KPIs + tendencia 6 meses + ranking top propiedades)
+- [x] `/contrato` role-aware: propietario ve lista de contratos, inquilino ve detalle + score
+- [x] Método **Efectivo** añadido como 5to rail en `/pagar` y `/metodos-pago`
+- [x] Grid de métodos en `/dashboard` reestructurado a scroll horizontal con snap
 
-**Resultado:** Toda la app autenticada usa ahora el design system unificado (tokens + lucide + TopBar/NavBar role-aware).
+### Producto — Modelo de negocio
+- [x] **Scoring MVP** (`src/app/lib/scoring.js`) — función pura 0-100 con 6 criterios: perfil completo, email confiable, antigüedad, pagos confirmados, sin rechazos, sin pendientes viejos. Umbrales: Básico ≥50, Protegido ≥70, Premium ≥85
+- [x] Scoring mostrado en `/contrato` (círculo + desglose), `/inquilinos` (badge por tenant), `/perfil` (card brand con progreso)
+- [x] **Los 3 modos de Rentto** (`src/app/lib/modos.js`) — Básico (facilitador 5% prop), Protegido (garante parcial 4%+3%), Premium (garante total 5%+5%). Helpers `getModo`, `toneDeModo`, `calcularComisiones`
+- [x] Selector de modo en `/nueva-propiedad` (3 cards comparativas con comisiones en vivo)
+- [x] Toggle group de modo en edit form de `/propietario`
+- [x] Badge de modo en cards del marketplace `/propiedades`
+- [x] Pricing breakdown en `/contrato` inquilino (renta + comisión = total)
+- [x] Columna `modo` añadida a `propiedades` en Supabase
 
-## ✅ Completado hoy (20 abr)
+### Seguridad
+- [x] **Privacy fixes**: filtros `user_id` en todas las queries client-side (8 archivos) — antes inquilinos veían propiedades/pagos ajenos y propietarios veían inventario global
+- [x] **Row Level Security** habilitado en todas las tablas del public schema (perfiles, propiedades, pagos, vinculaciones, tasa_bcv, score_historial)
+- [x] Policies RLS escritas y aplicadas (`supabase-rls.sql` en el repo) — scoping correcto: inquilino ve lo suyo, propietario ve lo suyo, marketplace abierto a autenticados
+- [x] Storage bucket `comprobantes` — policy SELECT pública eliminada (ya no se puede listar el bucket, pero los links directos siguen funcionando)
+- [x] **Leaked Password Protection** activado en Auth (check contra Have I Been Pwned)
+- [x] Credenciales Supabase movidas a env vars (`NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`) — antes hardcoded en `src/app/lib/supabase.js`
+- [x] Env vars configuradas en Vercel, deploy verde en producción
 
-### Chasis de app autenticada
-- [x] TopBar sticky unificada (logo R + rentto + pill VE + 🔔 + avatar con inicial)
-- [x] NavBar role-aware con FAB central elevado
-  - Inquilino: `Inicio · Explorar · [⊕ Pagar] · Contrato · Perfil`
-  - Propietario: `Inicio · Stats · [⊕ Publicar] · Explorar · Perfil`
-- [x] layout.js integra TopBar + NavBar, ajuste de padding
+### Bugs resueltos
+- [x] "Hola, Jesús" hardcoded → ahora pulla `perfil.nombre`
+- [x] `/design-system` eliminada (showcase ya no necesario)
+- [x] Badge real de pendientes en la campana del TopBar (conteo scoped a propiedades del propietario)
+- [x] Email de `/api/notificar` ahora tiene botón CTA clickeable que linkea a `/propietario#pendientes`
 
-### Migraciones al design system
-- [x] `/propiedades` (marketplace) — iconos lucide, chips brand, WhatsApp CTA
-- [x] `/dashboard` (inquilino) — hero brand-800, quick actions, historial tokenizado
-- [x] `/perfil` — avatar brand, menú uniforme con 7 opciones (Datos, Contratos, Métodos, Recibos, Notif, Seguridad, Configuración), CTA propietario condicional, logout danger-tokenizado
-- [x] `/contrato` **role-aware**: propietario ve lista de contratos, inquilino ve detalle + score circular
-
-### Command-center del propietario (`/propietario`)
-- [x] Hero del mes: `$cobrado / $esperado` con barra de progreso
-- [x] Banner accionable de pagos pendientes (ámbar, ancla a sección)
-- [x] Quick actions row: Inquilinos · Contratos · Ingresos
-- [x] Próximos cobros: top 3 por días restantes al corte
-- [x] Pagos pendientes priorizados antes del historial
-
-### Nuevas rutas
-- [x] `/inquilinos` — directorio de tenants con cards expandibles (dirección, renta, teléfono, fecha vinculación, WhatsApp + Ver pagos)
-- [x] `/estadisticas` — KPIs (total, mes, promedio, ocupación), tendencia 6 meses en barras, ranking top propiedades
-
-### Seguridad cerrada
-- [x] `/api/notificar` probado en local (HTTP 200, email entregado)
-- [x] Verificado: cero console.log en notificar/route.js
-- [x] `docs/` con credenciales reubicado a `C:\Users\Ramig\secretos\rentto-docs\` y gitignoreado
-- [x] 7 commits pusheados a origin/main (incluye rotación RESEND_API_KEY)
+### Producción
+- [x] Deploy verde en `rentto.vercel.app`
+- [x] `/api/notificar` probado en producción (HTTP 200, email llega con CTA funcionando)
 
 ## ⏳ Pendiente
 
-### Migración de paneles — ✅ COMPLETA
+### Datos
+- [ ] Limpiar fotos sucias en BD (algunas propiedades tienen screenshots de auth pages como fotos)
+- [ ] El diagrama muestra `propiedades.modo` pero verificar que todas las filas existentes tengan valor (no null) — si hay nulls, UPDATE a 'basico' por defecto
 
-Todos los paneles de la app migrados al design system.
+### Producto
+- [ ] Página `/modos` educativa (landing comparativa de Básico/Protegido/Premium para marketing)
+- [ ] Auto-registro en `score_historial` — trigger que inserte fila cuando un pago pase a 'confirmado' (hoy la tabla está vacía, el scoring la ignora)
+- [ ] Validación de modo vs score del inquilino al crear vinculación (si propiedad es Premium, inquilino debe tener score ≥85)
+- [ ] Sistema real de notificaciones (tabla `notificaciones` con inbox del usuario + campana con unreads)
 
-### Seguridad
-- [ ] Probar `/api/notificar` en producción tras push
-- [ ] Decidir si ejecutar git filter-repo para limpiar key vieja del historial
-
-### Features futuras
-- [ ] Conectar notificaciones reales (badge con count en TopBar bell)
-- [ ] Implementar sistema de scoring del MODELO-NEGOCIO.md
-- [ ] Implementar los 3 modos (Básico / Protegido / Premium)
+### Crecimiento
 - [ ] Comprar dominio propio (rentto.com o rentto.ve)
+- [ ] Configurar Resend con dominio custom (hoy mails caen en spam por `onboarding@resend.dev`)
+- [ ] Preparar landing de marketing / wait-list
+- [ ] Plan de piloto con 10 propiedades en Caracas (Municipio Sucre)
 
-## 📋 Decisiones de producto tomadas hoy
+### Técnico
+- [ ] 4 Recommendations que Vercel muestra en Deployment Settings (revisar qué son)
+- [ ] Considerar si los `console.log` de `make-icons.js` siguen siendo necesarios
+- [ ] PWA — revisar por qué no se instala bien desde teléfono
 
-- **Patrón bottom nav**: 4 items + FAB central (modelo Mercado Pago / Yape / Bancamiga)
-- **Navegación role-aware**: propietario e inquilino ven apps diferentes
-- **"Contratos" vive en el menú de perfil**, no en el nav principal (propietario)
-- **"Ingresos" e "Inquilinos" quedan como atajos en /propietario**, liberando slots del nav para Stats y Explorar
-- **Propietarios ven el marketplace** (`/propiedades` como Explorar) para inteligencia de precios
-- **Inquilino expandible en lugar de ruta detalle** — click en card muestra dirección, renta, fecha, teléfono
+## 📋 Decisiones tomadas
 
-## 🎯 Próxima sesión (con migración completa, el foco cambia a producto)
-
-1. Probar `/api/notificar` en producción tras este push
-2. Implementar **sistema de scoring** del MODELO-NEGOCIO.md
-3. Implementar **los 3 modos** (Básico / Protegido / Premium) con su pricing
-4. Conectar **badge de conteo real** en la campana del TopBar
-5. Eliminar ruta `/design-system` (ya no es necesaria como showcase público)
-6. Fix del bug: nombre hardcodeado "Hola, Jesús" en `/dashboard`
-7. Fix del bug: algunas propiedades tienen screenshots como fotos en BD
-8. Comprar dominio (rentto.com o rentto.ve) + configurar Resend con dominio
+- **Scoring:** 6 criterios medibles con datos actuales, escalados a 100 pts. Sin integraciones externas por ahora (identidad, bancos, referencias externas) — viene en fase 2
+- **Modos:** pricing según MODELO-NEGOCIO.md, sin enforcement de score_minimo todavía (el propietario puede elegir cualquiera)
+- **RLS:** conviven policies en español (viejas, owner-only) con las mías en inglés (añaden propietario-view). Son PERMISSIVE → se combinan con OR. Limpieza de duplicados: tarea futura
+- **Env vars:** `NEXT_PUBLIC_*` porque son client-side. Supabase anon key es safe de exponer por diseño (RLS protege)
 
 ## 📂 Archivos clave
 
-- `MODELO-NEGOCIO.md` — estrategia de producto
+- `MODELO-NEGOCIO.md` — estrategia de producto, 3 modos, scoring criteria
+- `supabase-rls.sql` — policies RLS idempotentes (para correr en SQL editor)
+- `src/app/lib/scoring.js` — función pura de scoring MVP
+- `src/app/lib/modos.js` — definición de los 3 modos + helpers
+- `src/app/lib/supabase.js` — cliente con env vars
 - `src/app/globals.css` — design tokens (Tailwind v4 @theme)
-- `src/app/design-system/page.js` — showcase visual (borrar al final)
-- `src/app/TopBar.js` — barra superior unificada
-- `src/app/NavBar.js` — bottom nav role-aware con FAB
+- `src/app/TopBar.js` / `NavBar.js` — chasis autenticado
 
-## 🐛 Bugs conocidos
+## 🎯 Próxima sesión — prioridades sugeridas
 
-- Nombre del inquilino hardcodeado en `/dashboard` ("Hola, Jesús")
-- Emails de Resend van a spam (requiere dominio propio)
-- PWA no se instala correctamente desde teléfono
-- Algunas propiedades tienen screenshots de auth pages como "fotos" en la BD (data sucia, limpiar después)
-- "Bell" de notificaciones en TopBar sin badge de conteo real todavía
+1. **Auto-registro en score_historial** (trigger en Supabase) — hace real el scoring
+2. **Validación modo vs score** — impide que inquilinos se vinculen a propiedades fuera de su rango
+3. **Limpieza de data** (fotos sucias, nulls en modo)
+4. **Dominio propio + Resend** — fuera del spam
+5. **Landing de wait-list** con `/modos` educativa
