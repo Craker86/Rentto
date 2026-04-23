@@ -11,6 +11,13 @@ export async function POST(request) {
 
   const { monto, metodo, fecha, emailPropietario } = await request.json();
 
+  // Construye la URL base a partir del request (funciona en local y en Vercel)
+  const host = request.headers.get("host") || "localhost:3000";
+  const proto = request.headers.get("x-forwarded-proto")
+    || (host.includes("localhost") ? "http" : "https");
+  const appUrl = `${proto}://${host}`;
+  const ctaUrl = `${appUrl}/propietario#pendientes`;
+
   const { error } = await resend.emails.send({
     from: "Rentto <onboarding@resend.dev>",
     to: emailPropietario,
@@ -30,8 +37,14 @@ export async function POST(request) {
             <tr><td style="color: #6b7280; padding: 6px 0;">Estado</td><td style="text-align: right; color: #d97706; font-weight: bold;">Pendiente de confirmación</td></tr>
           </table>
         </div>
+        <div style="text-align: center; margin-top: 20px;">
+          <a href="${ctaUrl}"
+             style="display: inline-block; background: #065f46; color: white; text-decoration: none; padding: 12px 28px; border-radius: 9999px; font-weight: 600; font-size: 14px;">
+            Revisar y confirmar pago
+          </a>
+        </div>
         <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 16px;">
-          Ingresa a Rentto para confirmar o rechazar este pago.
+          O ingresa a Rentto manualmente: <a href="${appUrl}" style="color: #059669;">${host}</a>
         </p>
       </div>
     `,
