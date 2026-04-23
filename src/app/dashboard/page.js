@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
-import { Zap, Plus, Smartphone, Landmark, CreditCard, ArrowRight } from "lucide-react";
+import { Zap, Plus, Smartphone, Landmark, CreditCard, Banknote, ArrowRight } from "lucide-react";
 
 export default function Home() {
   const [pagos, setPagos] = useState([]);
@@ -69,6 +69,7 @@ export default function Home() {
     { id: "zelle", label: "Zelle", letter: "Z" },
     { id: "transfer", label: "Transfer.", Icon: Landmark },
     { id: "binance", label: "Binance", Icon: CreditCard },
+    { id: "efectivo", label: "Efectivo", Icon: Banknote },
   ];
 
   return (
@@ -131,21 +132,21 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-4 gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-5 px-5 snap-x snap-mandatory">
           {metodos.map((m) => (
             <Link
               key={m.id}
               href="/pagar"
-              className="bg-surface border border-stroke rounded-card p-3 text-center hover:border-brand-500 hover:shadow-card transition"
+              className="flex-shrink-0 w-[88px] bg-surface border border-stroke rounded-card p-3 text-center hover:border-brand-500 hover:shadow-card transition snap-start"
             >
-              <div className="w-9 h-9 mx-auto bg-brand-50 rounded-pill flex items-center justify-center mb-1.5">
+              <div className="w-10 h-10 mx-auto bg-brand-50 rounded-pill flex items-center justify-center mb-1.5">
                 {m.Icon ? (
-                  <m.Icon size={16} className="text-brand-700" strokeWidth={2.25} />
+                  <m.Icon size={18} className="text-brand-700" strokeWidth={2.25} />
                 ) : (
                   <span className="text-sm font-bold text-brand-700">{m.letter}</span>
                 )}
               </div>
-              <span className="text-[10px] text-fg-muted font-medium">{m.label}</span>
+              <span className="text-[11px] text-fg-muted font-semibold whitespace-nowrap">{m.label}</span>
             </Link>
           ))}
         </div>
@@ -222,5 +223,6 @@ function iconoMetodo(metodo) {
   if (metodo === "Pago móvil") return { Icon: Smartphone };
   if (metodo === "Zelle") return { letter: "Z" };
   if (metodo === "Transferencia") return { Icon: Landmark };
+  if (metodo === "Efectivo") return { Icon: Banknote };
   return { Icon: CreditCard };
 }

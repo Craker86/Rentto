@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Smartphone, DollarSign, Landmark, CreditCard } from "lucide-react";
+import { ArrowLeft, Smartphone, DollarSign, Landmark, CreditCard, Banknote } from "lucide-react";
 
 const metodos = [
   { Icon: Smartphone, nombre: "Pago móvil", detalle: "Disponible en todos los bancos" },
   { Icon: DollarSign, nombre: "Zelle", detalle: "Pagos en USD" },
   { Icon: Landmark, nombre: "Transferencia bancaria", detalle: "Cualquier banco nacional" },
   { Icon: CreditCard, nombre: "Binance Pay", detalle: "USDT y criptomonedas" },
+  { Icon: Banknote, nombre: "Efectivo", detalle: "Entrega en persona" },
 ];
 
 export default function MetodosPago() {
@@ -22,7 +23,7 @@ export default function MetodosPago() {
         </Link>
 
         <h1 className="text-2xl font-bold text-fg">Métodos de pago</h1>
-        <p className="text-sm text-fg-muted mt-1">Cuatro rails aceptados en Rentto</p>
+        <p className="text-sm text-fg-muted mt-1">Cinco rails aceptados en Rentto</p>
 
         <div className="bg-surface rounded-card shadow-card mt-4 divide-y divide-stroke overflow-hidden">
           {metodos.map(({ Icon, nombre, detalle }) => (

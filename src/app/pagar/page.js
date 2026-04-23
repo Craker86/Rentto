@@ -10,6 +10,7 @@ import {
   DollarSign,
   Landmark,
   CreditCard,
+  Banknote,
   Upload,
   FileText,
   Check,
@@ -36,6 +37,7 @@ export default function Pagar() {
     { id: "zelle", nombre: "Zelle", detalle: "maria@gmail.com", tag: "USD", tagTone: "brand", Icon: DollarSign },
     { id: "transferencia", nombre: "Transferencia bancaria", detalle: "Banco de Venezuela · Cta. 0102", tag: "Instantáneo", tagTone: "success", Icon: Landmark },
     { id: "binance", nombre: "Binance Pay / USDT", detalle: "Wallet vinculada", tag: "Cripto", tagTone: "warning", Icon: CreditCard },
+    { id: "efectivo", nombre: "Efectivo", detalle: "Entrega en persona", tag: "Cash", tagTone: "brand", Icon: Banknote },
   ];
 
   useEffect(() => {
