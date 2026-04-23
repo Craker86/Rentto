@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import { Trophy, TrendingUp, Home, Calendar, User, FileText, AlertCircle } from "lucide-react";
 import { calcularScore, CRITERIOS, toneDeModo } from "../lib/scoring";
+import { getModo, calcularComisiones, toneDeModo as toneDeModoProp } from "../lib/modos";
+import { Shield, ShieldCheck, ShieldPlus } from "lucide-react";
 
 export default function Contrato() {
   const router = useRouter();
@@ -167,6 +169,57 @@ function ContratoCardPropietario({ contrato }) {
   );
 }
 
+function ModoResumen({ propiedad }) {
+  const modo = getModo(propiedad.modo);
+  const tone = toneDeModoProp(modo.id);
+  const comisiones = calcularComisiones(modo.id, propiedad.monto_mensual);
+  const Icon = modo.id === "premium" ? ShieldPlus : modo.id === "protegido" ? ShieldCheck : Shield;
+
+  const heroStyles = {
+    brand: "bg-brand-800 text-fg-inverse",
+    success: "bg-success-600 text-fg-inverse",
+    warning: "bg-warning-600 text-fg-inverse",
+  }[tone] || "bg-fg text-fg-inverse";
+
+  return (
+    <div className={`${heroStyles} rounded-card p-4 mt-3 shadow-elevated`}>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-white/20 rounded-pill flex items-center justify-center flex-shrink-0 backdrop-blur-sm">
+          <Icon size={20} strokeWidth={2.25} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] uppercase tracking-wide opacity-80 font-semibold">Modo de Rentto</p>
+          <p className="text-lg font-bold">{modo.label}</p>
+          <p className="text-[11px] opacity-85">{modo.descripcion}</p>
+        </div>
+      </div>
+
+      <div className="mt-3 pt-3 border-t border-white/20 space-y-1.5">
+        <div className="flex justify-between text-xs">
+          <span className="opacity-80">Renta</span>
+          <span className="font-semibold">${Number(propiedad.monto_mensual).toLocaleString("es-VE")}</span>
+        </div>
+        {comisiones.mensualInq > 0 && (
+          <div className="flex justify-between text-xs">
+            <span className="opacity-80">Comisión Rentto ({modo.inquilino.mensual}%)</span>
+            <span className="font-semibold">+${comisiones.mensualInq.toFixed(0)}</span>
+          </div>
+        )}
+        <div className="flex justify-between text-sm pt-1.5 border-t border-white/20">
+          <span className="font-semibold">Total que pagas</span>
+          <span className="font-bold">${comisiones.totalMensualInq.toFixed(0)}/mes</span>
+        </div>
+      </div>
+
+      {modo.coberturaMeses > 0 && (
+        <p className="text-[11px] opacity-85 mt-3 pt-3 border-t border-white/20">
+          🛡️ Rentto cubre hasta {modo.coberturaMeses} {modo.coberturaMeses === 1 ? "mes" : "meses"} de impago
+        </p>
+      )}
+    </div>
+  );
+}
+
 function Row({ icon, label, value, valueClass = "text-fg" }) {
   return (
     <div className="flex items-start justify-between gap-3">
@@ -204,28 +257,32 @@ function VistaInquilino({ propiedad, pagos, scoring }) {
         </header>
 
         {propiedad && (
-          <div className="bg-surface rounded-card shadow-card p-4">
-            <p className="font-semibold text-fg">{propiedad.nombre}</p>
-            <div className="mt-3 pt-3 border-t border-stroke space-y-2">
-              <Row icon={<Home size={14} strokeWidth={2} />} label="Dirección" value={propiedad.direccion} />
-              <Row icon={<User size={14} strokeWidth={2} />} label="Propietario" value={propiedad.propietario_nombre || "—"} />
-              <Row
-                icon={<FileText size={14} strokeWidth={2} />}
-                label="Monto mensual"
-                value={`$${propiedad.monto_mensual} / mes`}
-                valueClass="text-brand-700 font-semibold"
-              />
-              <Row icon={<Calendar size={14} strokeWidth={2} />} label="Día de corte" value={`${propiedad.dia_corte} de cada mes`} />
-              <Row
-                icon={<Calendar size={14} strokeWidth={2} />}
-                label="Contrato hasta"
-                value={propiedad.fecha_fin_contrato
-                  ? new Date(propiedad.fecha_fin_contrato).toLocaleDateString("es-VE", { month: "long", year: "numeric" })
-                  : "Sin fecha"}
-              />
-              <Row icon={<AlertCircle size={14} strokeWidth={2} />} label="Cláusula de ajuste" value={propiedad.clausula_ajuste || "—"} />
+          <>
+            <div className="bg-surface rounded-card shadow-card p-4">
+              <p className="font-semibold text-fg">{propiedad.nombre}</p>
+              <div className="mt-3 pt-3 border-t border-stroke space-y-2">
+                <Row icon={<Home size={14} strokeWidth={2} />} label="Dirección" value={propiedad.direccion} />
+                <Row icon={<User size={14} strokeWidth={2} />} label="Propietario" value={propiedad.propietario_nombre || "—"} />
+                <Row
+                  icon={<FileText size={14} strokeWidth={2} />}
+                  label="Monto mensual"
+                  value={`$${propiedad.monto_mensual} / mes`}
+                  valueClass="text-brand-700 font-semibold"
+                />
+                <Row icon={<Calendar size={14} strokeWidth={2} />} label="Día de corte" value={`${propiedad.dia_corte} de cada mes`} />
+                <Row
+                  icon={<Calendar size={14} strokeWidth={2} />}
+                  label="Contrato hasta"
+                  value={propiedad.fecha_fin_contrato
+                    ? new Date(propiedad.fecha_fin_contrato).toLocaleDateString("es-VE", { month: "long", year: "numeric" })
+                    : "Sin fecha"}
+                />
+                <Row icon={<AlertCircle size={14} strokeWidth={2} />} label="Cláusula de ajuste" value={propiedad.clausula_ajuste || "—"} />
+              </div>
             </div>
-          </div>
+
+            <ModoResumen propiedad={propiedad} />
+          </>
         )}
 
         <h2 className="text-sm font-semibold text-fg mt-6 mb-3">Reputación de pago</h2>

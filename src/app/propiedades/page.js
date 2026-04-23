@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
-import { Search, Building2, X, MessageCircle } from "lucide-react";
+import { Search, Building2, X, MessageCircle, Shield, ShieldCheck, ShieldPlus } from "lucide-react";
+import { getModo, toneDeModo } from "../lib/modos";
 
 export default function Propiedades() {
   const router = useRouter();
@@ -135,6 +136,27 @@ export default function Propiedades() {
   );
 }
 
+function ModoBadge({ modoId }) {
+  const modo = getModo(modoId);
+  const tone = toneDeModo(modo.id);
+  const Icon = modo.id === "premium" ? ShieldPlus : modo.id === "protegido" ? ShieldCheck : Shield;
+  const styles = {
+    brand: "bg-brand-100 text-brand-800",
+    success: "bg-success-100 text-success-600",
+    warning: "bg-warning-100 text-warning-700",
+  }[tone] || "bg-surface-subtle text-fg-muted";
+
+  return (
+    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-pill w-fit ${styles}`}>
+      <Icon size={11} strokeWidth={2.5} />
+      Rentto {modo.label}
+      {modo.coberturaMeses > 0 && (
+        <span className="opacity-80 font-semibold">· Cubre {modo.coberturaMeses}m</span>
+      )}
+    </span>
+  );
+}
+
 function PropiedadCard({ prop, onPhotoClick }) {
   const waHref = `https://wa.me/${prop.telefono || ""}?text=${encodeURIComponent(
     `Hola, vi tu propiedad ${prop.nombre} en Rentto y me interesa.`
@@ -166,6 +188,8 @@ function PropiedadCard({ prop, onPhotoClick }) {
             <p className="text-[10px] text-fg-subtle mt-0.5">/ mes</p>
           </div>
         </div>
+
+        <ModoBadge modoId={prop.modo} />
 
         <div className="flex gap-2 flex-wrap">
           <span className="inline-flex items-center text-[11px] bg-brand-50 text-brand-700 px-2.5 py-1 rounded-pill font-semibold">

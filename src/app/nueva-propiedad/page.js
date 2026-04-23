@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../lib/supabase";
-import { ArrowLeft, Camera, X } from "lucide-react";
+import { ArrowLeft, Camera, X, Shield, ShieldCheck, ShieldPlus, Check } from "lucide-react";
+import { MODOS_LISTA, toneDeModo } from "../lib/modos";
 
 export default function NuevaPropiedad() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function NuevaPropiedad() {
   const [previews, setPreviews] = useState([]);
   const [descripcion, setDescripcion] = useState("");
   const [requisitos, setRequisitos] = useState("");
+  const [modo, setModo] = useState("basico");
 
   async function guardarPropiedad() {
     setCargando(true);
@@ -68,6 +70,7 @@ export default function NuevaPropiedad() {
       requisitos,
       telefono,
       fotos: fotosUrls,
+      modo,
     });
 
     if (error) {
@@ -95,6 +98,23 @@ export default function NuevaPropiedad() {
         <p className="text-sm text-fg-muted mt-1">Registra un inmueble para recibir pagos</p>
 
         <div className="bg-surface border border-stroke rounded-card shadow-card p-5 mt-4 space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-fg-muted block mb-2">
+              Modo de Rentto
+            </label>
+            <div className="space-y-2">
+              {MODOS_LISTA.map((m) => (
+                <ModoCard
+                  key={m.id}
+                  modo={m}
+                  selected={modo === m.id}
+                  onClick={() => setModo(m.id)}
+                  monto={Number(monto) || 0}
+                />
+              ))}
+            </div>
+          </div>
+
           <Field label="Nombre de la propiedad">
             <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
               placeholder="Ej: Apto 4B · Res. Los Samanes" className={inputClass} />
@@ -225,5 +245,56 @@ function Field({ label, children }) {
       <label className="text-xs font-semibold text-fg-muted block mb-1.5">{label}</label>
       {children}
     </div>
+  );
+}
+
+function ModoCard({ modo, selected, onClick, monto }) {
+  const tone = toneDeModo(modo.id);
+  const Icon = modo.id === "premium" ? ShieldPlus : modo.id === "protegido" ? ShieldCheck : Shield;
+  const comisionProp = (modo.propietario.mensual / 100) * monto;
+  const comisionInq = (modo.inquilino.mensual / 100) * monto;
+
+  const borderColor = selected
+    ? (tone === "brand" ? "border-brand-700" : tone === "success" ? "border-success-600" : "border-warning-600")
+    : "border-stroke";
+  const bgColor = selected
+    ? (tone === "brand" ? "bg-brand-50" : tone === "success" ? "bg-success-100" : "bg-warning-100")
+    : "bg-surface";
+  const iconBg = tone === "brand" ? "bg-brand-100 text-brand-800"
+    : tone === "success" ? "bg-success-100 text-success-600"
+    : "bg-warning-100 text-warning-700";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full text-left border-2 rounded-card p-3 transition ${borderColor} ${bgColor}`}
+    >
+      <div className="flex items-start gap-3">
+        <div className={`w-10 h-10 rounded-pill flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+          <Icon size={18} strokeWidth={2.25} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-bold text-fg">{modo.label}</h3>
+            <span className="text-[10px] font-semibold text-fg-muted">· {modo.slogan}</span>
+            {selected && <Check size={14} className="ml-auto text-brand-700" strokeWidth={2.5} />}
+          </div>
+          <p className="text-xs text-fg-muted mt-0.5 leading-relaxed">{modo.descripcion}</p>
+          {monto > 0 && (
+            <div className="flex gap-3 text-[11px] mt-2 pt-2 border-t border-stroke/50">
+              <span className="text-fg-muted">
+                Tú pagas <span className="font-semibold text-fg">{modo.propietario.mensual}% = ${comisionProp.toFixed(0)}/mes</span>
+              </span>
+              {modo.inquilino.mensual > 0 && (
+                <span className="text-fg-muted">
+                  Inq. <span className="font-semibold text-fg">${comisionInq.toFixed(0)}/mes</span>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </button>
   );
 }

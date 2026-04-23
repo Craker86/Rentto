@@ -16,7 +16,11 @@ import {
   AlertCircle,
   CalendarClock,
   ArrowRight,
+  Shield,
+  ShieldCheck,
+  ShieldPlus,
 } from "lucide-react";
+import { MODOS_LISTA, getModo, toneDeModo as toneDeModoProp } from "../lib/modos";
 
 export default function Propietario() {
   const router = useRouter();
@@ -30,6 +34,7 @@ export default function Propietario() {
   const [editMonto, setEditMonto] = useState("");
   const [editDescripcion, setEditDescripcion] = useState("");
   const [editRequisitos, setEditRequisitos] = useState("");
+  const [editModo, setEditModo] = useState("basico");
   const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
@@ -71,6 +76,7 @@ export default function Propietario() {
     setEditMonto(prop.monto_mensual);
     setEditDescripcion(prop.descripcion || "");
     setEditRequisitos(prop.requisitos || "");
+    setEditModo(prop.modo || "basico");
   }
 
   async function guardarEdicion() {
@@ -81,11 +87,12 @@ export default function Propietario() {
       monto_mensual: Number(editMonto),
       descripcion: editDescripcion,
       requisitos: editRequisitos,
+      modo: editModo,
     }).eq("id", editando);
     if (!error) {
       setPropiedades(propiedades.map(p => p.id === editando ? {
         ...p, nombre: editNombre, direccion: editDireccion, monto_mensual: Number(editMonto),
-        descripcion: editDescripcion, requisitos: editRequisitos
+        descripcion: editDescripcion, requisitos: editRequisitos, modo: editModo,
       } : p));
       setEditando(null);
     }
@@ -216,6 +223,7 @@ export default function Propietario() {
                       editMonto={editMonto} setEditMonto={setEditMonto}
                       editDescripcion={editDescripcion} setEditDescripcion={setEditDescripcion}
                       editRequisitos={editRequisitos} setEditRequisitos={setEditRequisitos}
+                      editModo={editModo} setEditModo={setEditModo}
                       guardando={guardando}
                       onSave={guardarEdicion}
                       onCancel={() => setEditando(null)}
@@ -318,6 +326,15 @@ function QuickAction({ href, Icon, label }) {
 }
 
 function PropiedadView({ prop, onEdit, onPhotoClick }) {
+  const modo = getModo(prop.modo);
+  const modoTone = toneDeModoProp(modo.id);
+  const ModoIcon = modo.id === "premium" ? ShieldPlus : modo.id === "protegido" ? ShieldCheck : Shield;
+  const modoStyles = {
+    brand: "bg-brand-100 text-brand-800",
+    success: "bg-success-100 text-success-600",
+    warning: "bg-warning-100 text-warning-700",
+  }[modoTone] || "bg-surface-subtle text-fg-muted";
+
   return (
     <>
       <div className="flex justify-between items-start gap-3">
@@ -331,6 +348,14 @@ function PropiedadView({ prop, onEdit, onPhotoClick }) {
         >
           <Pencil size={11} strokeWidth={2.5} /> Editar
         </button>
+      </div>
+
+      <div className="flex items-center gap-2 mt-2 flex-wrap">
+        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-pill ${modoStyles}`}>
+          <ModoIcon size={10} strokeWidth={2.5} />
+          {modo.label}
+        </span>
+        <span className="text-[10px] text-fg-muted">· {modo.slogan}</span>
       </div>
 
       <div className="flex justify-between items-center mt-3">
@@ -410,6 +435,7 @@ function EditForm({
   editMonto, setEditMonto,
   editDescripcion, setEditDescripcion,
   editRequisitos, setEditRequisitos,
+  editModo, setEditModo,
   guardando, onSave, onCancel,
 }) {
   const inputClass = "w-full px-3 py-2.5 border border-stroke bg-surface rounded-lg text-sm placeholder:text-fg-subtle focus:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-200 transition";
@@ -420,6 +446,34 @@ function EditForm({
       <input type="number" value={editMonto} onChange={(e) => setEditMonto(e.target.value)} placeholder="Monto mensual" className={inputClass} />
       <textarea value={editDescripcion} onChange={(e) => setEditDescripcion(e.target.value)} placeholder="Descripción" rows="2" className={`${inputClass} resize-none`} />
       <textarea value={editRequisitos} onChange={(e) => setEditRequisitos(e.target.value)} placeholder="Requisitos" rows="2" className={`${inputClass} resize-none`} />
+
+      <div>
+        <p className="text-[11px] font-semibold text-fg-muted mb-1.5">Modo de Rentto</p>
+        <div className="grid grid-cols-3 gap-1.5">
+          {MODOS_LISTA.map((m) => {
+            const tone = toneDeModoProp(m.id);
+            const selected = editModo === m.id;
+            const selectedStyles = {
+              brand: "bg-brand-100 text-brand-800 border-brand-700",
+              success: "bg-success-100 text-success-600 border-success-600",
+              warning: "bg-warning-100 text-warning-700 border-warning-600",
+            }[tone];
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setEditModo(m.id)}
+                className={`text-[11px] font-semibold py-2 rounded-lg border-2 transition ${
+                  selected ? selectedStyles : "bg-surface border-stroke text-fg-muted hover:border-brand-300"
+                }`}
+              >
+                {m.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="flex gap-2">
         <button
           onClick={onSave}
