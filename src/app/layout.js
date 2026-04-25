@@ -1,4 +1,6 @@
 import { Geist } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import NavBar from "./NavBar";
 import TopBar from "./TopBar";
@@ -26,6 +28,8 @@ export default function RootLayout({ children }) {
           {children}
         </main>
         <NavBar />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
