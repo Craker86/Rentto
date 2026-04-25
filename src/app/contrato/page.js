@@ -369,7 +369,7 @@ function VistaInquilino({ propiedad, pagos, scoring, historial }) {
 
         {historial && historial.length > 0 && (
           <div className="bg-surface rounded-card shadow-card p-4 mt-3">
-            <h3 className="text-sm font-semibold text-fg">Historial de score</h3>
+            <h3 className="text-sm font-semibold text-fg">Historial de pagos</h3>
             <p className="text-xs text-fg-muted mt-0.5">
               Eventos automáticos por cada pago confirmado o rechazado
             </p>
@@ -393,19 +393,16 @@ function VistaInquilino({ propiedad, pagos, scoring, historial }) {
                         {new Date(ev.created_at).toLocaleDateString("es-VE", {
                           day: "numeric", month: "long", year: "numeric",
                         })}
-                        {" · Total: "}
-                        <span className="font-semibold text-fg-muted">{ev.score_total} pts</span>
                       </p>
                     </div>
                   </li>
                 );
               })}
             </ol>
-            {historial.length > 10 && (
-              <p className="text-[10px] text-fg-subtle text-center mt-3">
-                Mostrando 10 de {historial.length} eventos
-              </p>
-            )}
+            <p className="text-[10px] text-fg-subtle mt-3 pt-3 border-t border-stroke leading-relaxed">
+              {historial.length > 10 && `Mostrando 10 de ${historial.length} eventos · `}
+              Tu score visible <span className="font-semibold">({score}/100)</span> usa estos eventos junto con perfil, antigüedad y otros criterios.
+            </p>
           </div>
         )}
 
