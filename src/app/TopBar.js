@@ -9,7 +9,7 @@ import { supabase } from "./lib/supabase";
 export default function TopBar() {
   const pathname = usePathname();
   const [nombre, setNombre] = useState("");
-  const [pendientes, setPendientes] = useState(0);
+  const [unreads, setUnreads] = useState(0);
 
   useEffect(() => {
     async function cargar() {
@@ -18,27 +18,18 @@ export default function TopBar() {
 
       const { data: perfil } = await supabase
         .from("perfiles")
-        .select("nombre, rol")
+        .select("nombre")
         .eq("id", session.user.id)
         .single();
       if (perfil?.nombre) setNombre(perfil.nombre);
 
-      // Badge: propietario ve conteo de pagos pendientes EN SUS PROPIEDADES
-      if (perfil?.rol === "propietario") {
-        const { data: myProps } = await supabase
-          .from("propiedades")
-          .select("id")
-          .eq("user_id", session.user.id);
-        const myPropIds = (myProps || []).map((p) => p.id);
-        if (myPropIds.length > 0) {
-          const { count } = await supabase
-            .from("pagos")
-            .select("*", { count: "exact", head: true })
-            .eq("estado", "pendiente")
-            .in("propiedad_id", myPropIds);
-          if (typeof count === "number") setPendientes(count);
-        }
-      }
+      // Conteo de notificaciones sin leer del usuario actual
+      const { count } = await supabase
+        .from("notificaciones")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", session.user.id)
+        .eq("leida", false);
+      if (typeof count === "number") setUnreads(count);
     }
     cargar();
   }, [pathname]);
@@ -62,14 +53,14 @@ export default function TopBar() {
 
         <div className="flex items-center gap-3">
           <Link
-            href={pendientes > 0 ? "/propietario#pendientes" : "/notificaciones"}
-            aria-label={`Notificaciones${pendientes > 0 ? ` (${pendientes} pendientes)` : ""}`}
+            href="/notificaciones"
+            aria-label={`Notificaciones${unreads > 0 ? ` (${unreads} sin leer)` : ""}`}
             className="relative p-1.5 rounded-pill text-fg-muted hover:text-fg hover:bg-surface-subtle transition"
           >
             <Bell size={20} strokeWidth={2} />
-            {pendientes > 0 && (
+            {unreads > 0 && (
               <span className="absolute top-0 right-0 min-w-[16px] h-4 px-1 bg-danger-600 text-white rounded-pill text-[9px] font-bold flex items-center justify-center ring-2 ring-surface">
-                {pendientes > 9 ? "9+" : pendientes}
+                {unreads > 9 ? "9+" : unreads}
               </span>
             )}
           </Link>
