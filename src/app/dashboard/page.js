@@ -4,7 +4,20 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
-import { Zap, Plus, Smartphone, Landmark, CreditCard, Banknote, ArrowRight } from "lucide-react";
+import {
+  Plus,
+  Smartphone,
+  Landmark,
+  CreditCard,
+  Banknote,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Sparkles,
+  XCircle,
+} from "lucide-react";
+import { calcularScore } from "../lib/scoring";
 
 export default function Home() {
   const [pagos, setPagos] = useState([]);
@@ -12,19 +25,17 @@ export default function Home() {
   const [cargando, setCargando] = useState(true);
   const [tasa, setTasa] = useState(0);
   const [nombre, setNombre] = useState("");
+  const [scoring, setScoring] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
     async function cargarDatos() {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push("/login");
-        return;
-      }
+      if (!session) { router.push("/login"); return; }
 
       const { data: perfil } = await supabase
         .from("perfiles")
-        .select("nombre")
+        .select("*")
         .eq("id", session.user.id)
         .single();
       if (perfil?.nombre) {
@@ -33,7 +44,6 @@ export default function Home() {
         setNombre(session.user.email.split("@")[0]);
       }
 
-      // Propiedad vinculada al inquilino (o null si no tiene)
       const { data: vinculacion } = await supabase
         .from("vinculaciones")
         .select("*, propiedades(*)")
@@ -43,13 +53,20 @@ export default function Home() {
         .maybeSingle();
       setPropiedad(vinculacion?.propiedades || null);
 
-      // Pagos del inquilino actual
       const { data: pagosData } = await supabase
         .from("pagos")
         .select("*")
         .eq("user_id", session.user.id)
         .order("fecha_pago", { ascending: false });
       setPagos(pagosData || []);
+
+      setScoring(
+        calcularScore({
+          perfil,
+          user: { email: session.user.email, created_at: session.user.created_at },
+          pagos: pagosData || [],
+        })
+      );
 
       const { data: tasaData } = await supabase
         .from("tasa_bcv")
@@ -61,7 +78,6 @@ export default function Home() {
 
       setCargando(false);
     }
-
     cargarDatos();
   }, []);
 
@@ -81,6 +97,8 @@ export default function Home() {
     { id: "efectivo", label: "Efectivo", Icon: Banknote },
   ];
 
+  const estado = calcularEstadoMes(propiedad, pagos);
+
   return (
     <div className="min-h-screen bg-surface-muted pb-24">
       <div className="max-w-[480px] mx-auto px-5">
@@ -89,65 +107,23 @@ export default function Home() {
             Hola{nombre ? `, ${nombre.split(" ")[0]}` : ""}
           </h1>
           <p className="text-sm text-fg-muted mt-1">
-            {propiedad ? "Tu alquiler de abril está pendiente" : "Vincula tu propiedad para empezar"}
+            {estado.subtitulo}
           </p>
         </header>
 
         {propiedad ? (
-          <section className="bg-brand-800 text-fg-inverse rounded-card p-5 shadow-elevated">
-            <p className="text-xs opacity-80 uppercase tracking-wide">
-              Monto del mes · Abril 2026
-            </p>
-            <p className="text-4xl font-bold mt-1">${propiedad.monto_mensual}</p>
-            <p className="text-xs opacity-70 mt-1">
-              Bs. {(propiedad.monto_mensual * tasa).toFixed(2)} al cambio BCV
-            </p>
-            <div className="flex justify-between items-end mt-4">
-              <span className="text-xs opacity-80">{propiedad.nombre}</span>
-              <span className="inline-flex items-center bg-white/15 text-xs font-medium px-3 py-1 rounded-pill backdrop-blur-sm">
-                Vence {propiedad.dia_corte} abr
-              </span>
-            </div>
-          </section>
+          <HeroDelMes propiedad={propiedad} tasa={tasa} estado={estado} />
         ) : (
-          <section className="bg-surface border border-stroke rounded-card p-6 text-center shadow-card">
-            <div className="w-12 h-12 bg-brand-50 rounded-pill flex items-center justify-center mx-auto">
-              <Plus size={22} className="text-brand-700" strokeWidth={2.25} />
-            </div>
-            <h2 className="text-sm font-semibold text-fg mt-3">
-              Aún no estás vinculado a una propiedad
-            </h2>
-            <p className="text-xs text-fg-muted mt-1 max-w-[280px] mx-auto leading-relaxed">
-              Pídele a tu propietario el código de 6 dígitos para recibir pagos, contrato y score.
-            </p>
-            <Link
-              href="/vincular"
-              className="inline-flex items-center justify-center gap-2 mt-4 px-5 py-2.5 bg-brand-800 text-fg-inverse rounded-pill text-xs font-semibold shadow-card hover:bg-brand-900 transition"
-            >
-              Vincular ahora <ArrowRight size={12} strokeWidth={2.5} />
-            </Link>
-          </section>
+          <EmptyVinculo />
         )}
 
-        {propiedad && (
-          <div className="bg-surface border border-stroke rounded-card p-4 mt-4 flex items-center gap-3 shadow-card">
-            <div className="w-10 h-10 bg-warning-100 rounded-pill flex items-center justify-center flex-shrink-0">
-              <Zap size={18} className="text-warning-700" strokeWidth={2.25} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-fg">
-                Paga hoy y gana 5% de descuento
-              </p>
-              <p className="text-xs text-fg-muted mt-0.5">
-                Tu propietario activó el pago anticipado
-              </p>
-            </div>
-          </div>
-        )}
+        {propiedad && <ProximaAccion estado={estado} />}
+
+        {propiedad && scoring && <ScoreMiniCard scoring={scoring} pagos={pagos} />}
 
         <Link
           href="/vincular"
-          className="flex items-center justify-center gap-2 bg-surface border border-dashed border-brand-300 rounded-card p-4 mt-3 hover:bg-brand-50 transition"
+          className="flex items-center justify-center gap-2 bg-surface border border-dashed border-brand-300 rounded-card p-4 mt-4 hover:bg-brand-50 transition"
         >
           <Plus size={16} className="text-brand-700" strokeWidth={2.5} />
           <div className="text-left">
@@ -184,9 +160,9 @@ export default function Home() {
 
         <div className="flex justify-between items-center mt-6 mb-3">
           <h2 className="text-sm font-semibold text-fg">Historial reciente</h2>
-          <span className="text-xs font-semibold text-brand-700 cursor-pointer hover:text-brand-800 transition">
+          <Link href="/recibos" className="text-xs font-semibold text-brand-700 hover:text-brand-800 transition">
             Ver todo
-          </span>
+          </Link>
         </div>
 
         <div className="bg-surface rounded-card border border-stroke divide-y divide-stroke shadow-card overflow-hidden">
@@ -195,7 +171,7 @@ export default function Home() {
               <p className="text-sm text-fg-muted">Aún no hay pagos registrados</p>
             </div>
           ) : (
-            pagos.map((pago) => (
+            pagos.slice(0, 5).map((pago) => (
               <PagoRow key={pago.id} pago={pago} />
             ))
           )}
@@ -205,9 +181,244 @@ export default function Home() {
   );
 }
 
+// ============================================================================
+// Componentes
+// ============================================================================
+
+function HeroDelMes({ propiedad, tasa, estado }) {
+  return (
+    <section className="bg-brand-800 text-fg-inverse rounded-card p-5 shadow-elevated">
+      <p className="text-xs opacity-80 uppercase tracking-wide">
+        Monto del mes · {estado.mesActualLabel}
+      </p>
+      <p className="text-4xl font-bold mt-1">${propiedad.monto_mensual}</p>
+      {tasa > 0 && (
+        <p className="text-xs opacity-70 mt-1">
+          Bs. {(propiedad.monto_mensual * tasa).toFixed(2)} al cambio BCV
+        </p>
+      )}
+      <div className="flex justify-between items-end mt-4 gap-2">
+        <span className="text-xs opacity-80 truncate">{propiedad.nombre}</span>
+        <CountdownChip estado={estado} />
+      </div>
+    </section>
+  );
+}
+
+function CountdownChip({ estado }) {
+  const base = "inline-flex items-center text-xs font-semibold px-3 py-1 rounded-pill backdrop-blur-sm flex-shrink-0";
+
+  if (estado.tipo === "confirmado") {
+    return <span className={`${base} bg-success-100 text-success-600`}>Pagado ✓</span>;
+  }
+  if (estado.tipo === "pendiente") {
+    return <span className={`${base} bg-warning-100 text-warning-700`}>Pendiente</span>;
+  }
+  if (estado.tipo === "vencido") {
+    return <span className={`${base} bg-danger-100 text-danger-600`}>Vencido</span>;
+  }
+  // anticipado o sin_pagar_aun
+  return (
+    <span className={`${base} bg-white/15 text-white`}>
+      {estado.diasAlCorte === 0 ? "Vence hoy" : `Faltan ${estado.diasAlCorte}d`}
+    </span>
+  );
+}
+
+function ProximaAccion({ estado }) {
+  const config = {
+    confirmado: {
+      Icon: CheckCircle2,
+      tone: "success",
+      titulo: "Todo al día este mes",
+      cuerpo: "Tu pago fue confirmado. +7 pts en tu score Rentto.",
+      cta: null,
+    },
+    pendiente: {
+      Icon: Clock,
+      tone: "warning",
+      titulo: "Esperando confirmación",
+      cuerpo: "Tu pago fue enviado. El propietario lo revisará pronto.",
+      cta: { label: "Ver recibo", href: "/recibos" },
+    },
+    rechazado: {
+      Icon: XCircle,
+      tone: "danger",
+      titulo: "Tu pago fue rechazado",
+      cuerpo: "Verifica el comprobante y vuelve a intentar.",
+      cta: { label: "Volver a pagar", href: "/pagar" },
+    },
+    vencido: {
+      Icon: AlertCircle,
+      tone: "danger",
+      titulo: `Vencido hace ${Math.abs(estado.diasAlCorte)} ${Math.abs(estado.diasAlCorte) === 1 ? "día" : "días"}`,
+      cuerpo: "Paga lo antes posible para mantener tu score.",
+      cta: { label: "Pagar ahora", href: "/pagar" },
+    },
+    sin_pagar_aun: {
+      Icon: Clock,
+      tone: "brand",
+      titulo: estado.diasAlCorte === 0
+        ? "Tu alquiler vence hoy"
+        : `Faltan ${estado.diasAlCorte} ${estado.diasAlCorte === 1 ? "día" : "días"} para vencer`,
+      cuerpo: "Adelantarte protege tu score y evita penalizaciones.",
+      cta: { label: "Pagar ahora", href: "/pagar" },
+    },
+  }[estado.tipo];
+
+  if (!config) return null;
+
+  const styles = {
+    success: "bg-success-100 text-success-600 border-success-600/20",
+    warning: "bg-warning-100 text-warning-700 border-warning-600/20",
+    danger: "bg-danger-100 text-danger-600 border-danger-600/20",
+    brand: "bg-brand-50 text-brand-800 border-brand-200",
+  }[config.tone];
+
+  const ctaStyles = {
+    success: "bg-success-600 text-fg-inverse hover:bg-success-600/90",
+    warning: "bg-warning-600 text-fg-inverse hover:bg-warning-700",
+    danger: "bg-danger-600 text-fg-inverse hover:bg-danger-600/90",
+    brand: "bg-brand-800 text-fg-inverse hover:bg-brand-900",
+  }[config.tone];
+
+  return (
+    <div className={`rounded-card border p-4 mt-4 shadow-card ${styles}`}>
+      <div className="flex items-start gap-3">
+        <div className="w-9 h-9 bg-white/40 rounded-pill flex items-center justify-center flex-shrink-0">
+          <config.Icon size={18} strokeWidth={2.25} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold">{config.titulo}</p>
+          <p className="text-xs opacity-90 mt-0.5 leading-relaxed">{config.cuerpo}</p>
+          {config.cta && (
+            <Link
+              href={config.cta.href}
+              className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-pill mt-2.5 shadow-card transition ${ctaStyles}`}
+            >
+              {config.cta.label} <ArrowRight size={12} strokeWidth={2.5} />
+            </Link>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ScoreMiniCard({ scoring, pagos }) {
+  const { score, modo } = scoring;
+  const hoy = new Date();
+  const pagosEsteMes = pagos.filter((p) => {
+    const f = new Date(p.fecha_pago);
+    return f.getMonth() === hoy.getMonth() && f.getFullYear() === hoy.getFullYear();
+  });
+  const ptsEsteMes = pagosEsteMes.reduce((s, p) => {
+    if (p.estado === "confirmado") return s + 7;
+    if (p.estado === "rechazado") return s - 10;
+    return s;
+  }, 0);
+
+  return (
+    <Link
+      href="/contrato"
+      className="flex items-center gap-3 bg-surface border border-stroke rounded-card p-4 mt-3 shadow-card hover:border-brand-300 transition"
+    >
+      <div className="w-10 h-10 bg-brand-50 rounded-pill flex items-center justify-center flex-shrink-0">
+        <Sparkles size={18} className="text-brand-700" strokeWidth={2.25} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-fg-muted">Tu score Rentto</p>
+        <div className="flex items-baseline gap-1.5 mt-0.5">
+          <p className="text-xl font-bold text-fg">{score}</p>
+          <span className="text-[11px] text-fg-subtle">/ 100</span>
+          <span className="inline-flex items-center text-[10px] font-bold bg-brand-100 text-brand-800 px-2 py-0.5 rounded-pill ml-1">
+            {modo}
+          </span>
+        </div>
+      </div>
+      {ptsEsteMes !== 0 && (
+        <span className={`text-xs font-bold flex-shrink-0 ${
+          ptsEsteMes > 0 ? "text-success-600" : "text-danger-600"
+        }`}>
+          {ptsEsteMes > 0 ? "+" : ""}{ptsEsteMes} este mes
+        </span>
+      )}
+      <ArrowRight size={14} className="text-fg-subtle flex-shrink-0" strokeWidth={2.25} />
+    </Link>
+  );
+}
+
+function EmptyVinculo() {
+  return (
+    <section className="bg-surface border border-stroke rounded-card p-6 text-center shadow-card">
+      <div className="w-12 h-12 bg-brand-50 rounded-pill flex items-center justify-center mx-auto">
+        <Plus size={22} className="text-brand-700" strokeWidth={2.25} />
+      </div>
+      <h2 className="text-sm font-semibold text-fg mt-3">
+        Aún no estás vinculado a una propiedad
+      </h2>
+      <p className="text-xs text-fg-muted mt-1 max-w-[280px] mx-auto leading-relaxed">
+        Pídele a tu propietario el código de 6 dígitos para recibir pagos, contrato y score.
+      </p>
+      <Link
+        href="/vincular"
+        className="inline-flex items-center justify-center gap-2 mt-4 px-5 py-2.5 bg-brand-800 text-fg-inverse rounded-pill text-xs font-semibold shadow-card hover:bg-brand-900 transition"
+      >
+        Vincular ahora <ArrowRight size={12} strokeWidth={2.5} />
+      </Link>
+    </section>
+  );
+}
+
+// ============================================================================
+// Lógica
+// ============================================================================
+
+function calcularEstadoMes(propiedad, pagos) {
+  const hoy = new Date();
+  const mesActualLabel = hoy.toLocaleDateString("es-VE", { month: "long", year: "numeric" });
+
+  if (!propiedad) {
+    return {
+      tipo: "sin_propiedad",
+      subtitulo: "Vincula tu propiedad para empezar",
+      mesActualLabel,
+      diasAlCorte: 0,
+    };
+  }
+
+  // ¿Hay pago de este mes?
+  const pagoEsteMes = pagos.find((p) => {
+    const f = new Date(p.fecha_pago);
+    return f.getMonth() === hoy.getMonth() && f.getFullYear() === hoy.getFullYear();
+  });
+
+  const dia = propiedad.dia_corte || 1;
+  // Próxima fecha de corte (este mes si no ha pasado, siguiente si ya pasó)
+  let fechaCorte = new Date(hoy.getFullYear(), hoy.getMonth(), dia);
+  let diasAlCorte = Math.ceil((fechaCorte - hoy) / (1000 * 60 * 60 * 24));
+
+  if (pagoEsteMes) {
+    if (pagoEsteMes.estado === "confirmado") {
+      return { tipo: "confirmado", subtitulo: "Estás al día este mes", mesActualLabel, diasAlCorte };
+    }
+    if (pagoEsteMes.estado === "rechazado") {
+      return { tipo: "rechazado", subtitulo: "Tu pago necesita revisión", mesActualLabel, diasAlCorte };
+    }
+    return { tipo: "pendiente", subtitulo: "Pago enviado, esperando confirmación", mesActualLabel, diasAlCorte };
+  }
+
+  // No hay pago este mes
+  if (diasAlCorte < 0) {
+    return { tipo: "vencido", subtitulo: "Tu alquiler está vencido", mesActualLabel, diasAlCorte };
+  }
+  return { tipo: "sin_pagar_aun", subtitulo: "Tu alquiler de este mes te espera", mesActualLabel, diasAlCorte };
+}
+
 function PagoRow({ pago }) {
   const { Icon, letter } = iconoMetodo(pago.metodo);
   const confirmado = pago.estado === "confirmado";
+  const rechazado = pago.estado === "rechazado";
 
   return (
     <div className="flex items-center gap-3 p-3">
@@ -240,10 +451,12 @@ function PagoRow({ pago }) {
           className={`inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-pill mt-0.5 ${
             confirmado
               ? "bg-success-100 text-success-600"
-              : "bg-warning-100 text-warning-700"
+              : rechazado
+                ? "bg-danger-100 text-danger-600"
+                : "bg-warning-100 text-warning-700"
           }`}
         >
-          {confirmado ? "Confirmado" : "Pendiente"}
+          {confirmado ? "Confirmado" : rechazado ? "Rechazado" : "Pendiente"}
         </span>
       </div>
     </div>

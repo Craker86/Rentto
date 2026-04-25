@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   XCircle,
   Users,
+  Settings,
 } from "lucide-react";
 
 const ICONOS = {
@@ -103,16 +104,25 @@ export default function Notificaciones() {
                 : `${items.length} ${items.length === 1 ? "notificación" : "notificaciones"}${noLeidas > 0 ? ` · ${noLeidas} sin leer` : ""}`}
             </p>
           </div>
-          {noLeidas > 0 && (
-            <button
-              onClick={marcarTodasLeidas}
-              disabled={marcando}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 bg-brand-50 px-3 py-1.5 rounded-pill hover:bg-brand-100 transition flex-shrink-0 disabled:opacity-60"
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {noLeidas > 0 && (
+              <button
+                onClick={marcarTodasLeidas}
+                disabled={marcando}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 bg-brand-50 px-3 py-1.5 rounded-pill hover:bg-brand-100 transition disabled:opacity-60"
+              >
+                <CheckCheck size={12} strokeWidth={2.5} />
+                {marcando ? "…" : "Marcar"}
+              </button>
+            )}
+            <Link
+              href="/notificaciones/preferencias"
+              aria-label="Preferencias"
+              className="w-8 h-8 rounded-pill flex items-center justify-center text-fg-muted hover:text-fg hover:bg-surface-subtle transition"
             >
-              <CheckCheck size={12} strokeWidth={2.5} />
-              {marcando ? "…" : "Marcar todas"}
-            </button>
-          )}
+              <Settings size={16} strokeWidth={2.25} />
+            </Link>
+          </div>
         </header>
 
         {items.length === 0 ? (

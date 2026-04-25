@@ -19,6 +19,7 @@ import {
   Shield,
   ShieldCheck,
   ShieldPlus,
+  Download,
 } from "lucide-react";
 import { MODOS_LISTA, getModo, toneDeModo as toneDeModoProp } from "../lib/modos";
 
@@ -87,10 +88,12 @@ export default function Propietario() {
     if (!pago) return;
     const { data: inquilino } = await supabase
       .from("perfiles")
-      .select("email")
+      .select("email, notif_prefs")
       .eq("id", pago.user_id)
       .single();
     if (!inquilino?.email) return;
+    const emailOk = inquilino?.notif_prefs?.[tipo]?.email ?? true;
+    if (!emailOk) return;
     fetch("/api/notificar", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -317,7 +320,16 @@ export default function Propietario() {
 
         {(confirmados.length > 0 || rechazados.length > 0) && (
           <section className="mt-6">
-            <h2 className="text-sm font-semibold text-fg mb-3">Historial</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-fg">Historial</h2>
+              <button
+                onClick={() => exportarPagosCSV(pagos, propiedades)}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 bg-brand-50 px-3 py-1.5 rounded-pill hover:bg-brand-100 transition"
+              >
+                <Download size={12} strokeWidth={2.5} />
+                Exportar CSV
+              </button>
+            </div>
             <div className="flex flex-col gap-3">
               {[...confirmados, ...rechazados].slice(0, 10).map((pago) => (
                 <PagoCard key={pago.id} pago={pago} onConfirm={() => {}} onReject={() => {}} />
@@ -343,6 +355,41 @@ export default function Propietario() {
       )}
     </div>
   );
+}
+
+function exportarPagosCSV(pagos, propiedades) {
+  const propMap = Object.fromEntries((propiedades || []).map((p) => [p.id, p.nombre]));
+  const headers = ["Fecha", "Propiedad", "Monto USD", "Monto Bs", "Método", "Estado", "Referencia", "Notas"];
+
+  const escape = (v) => {
+    if (v == null) return "";
+    const s = String(v).replace(/"/g, '""');
+    return /[",\n]/.test(s) ? `"${s}"` : s;
+  };
+
+  const filas = (pagos || []).map((p) => [
+    p.fecha_pago || "",
+    propMap[p.propiedad_id] || "—",
+    p.monto || "",
+    p.monto_bs || "",
+    p.metodo || "",
+    p.estado || "",
+    p.referencia || "",
+    p.notas || "",
+  ].map(escape).join(","));
+
+  const csv = [headers.join(","), ...filas].join("\n");
+  // BOM para que Excel detecte UTF-8 (acentos, ñ)
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const fecha = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `rentto-pagos-${fecha}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function calcularProximosCobros(propiedadesOcupadas, hoy) {

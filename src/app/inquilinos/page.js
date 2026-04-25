@@ -12,6 +12,7 @@ import {
   Phone,
   Calendar,
   FileText,
+  Search,
 } from "lucide-react";
 import { calcularScore, toneDeModo } from "../lib/scoring";
 
@@ -20,6 +21,7 @@ export default function Inquilinos() {
   const [cargando, setCargando] = useState(true);
   const [filas, setFilas] = useState([]);
   const [expandido, setExpandido] = useState(null);
+  const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
     async function cargar() {
@@ -94,6 +96,16 @@ export default function Inquilinos() {
   }
 
   const activos = filas.filter((v) => v.estado === "activo").length;
+  const filasFiltradas = busqueda.trim()
+    ? filas.filter((v) => {
+        const q = busqueda.toLowerCase();
+        const nombre = (v.inquilino?.nombre || "").toLowerCase();
+        const propiedad = (v.propiedad?.nombre || "").toLowerCase();
+        const direccion = (v.propiedad?.direccion || "").toLowerCase();
+        const tel = (v.inquilino?.telefono || "").toLowerCase();
+        return nombre.includes(q) || propiedad.includes(q) || direccion.includes(q) || tel.includes(q);
+      })
+    : filas;
 
   return (
     <div className="min-h-screen bg-surface-muted pb-24">
@@ -118,16 +130,41 @@ export default function Inquilinos() {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
-            {filas.map((v) => (
-              <InquilinoCard
-                key={v.id}
-                vinculacion={v}
-                abierto={expandido === v.id}
-                onToggle={() => setExpandido(expandido === v.id ? null : v.id)}
+          <>
+            <div className="relative mt-3">
+              <Search
+                size={16}
+                strokeWidth={2}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-fg-subtle pointer-events-none"
               />
-            ))}
-          </div>
+              <input
+                type="text"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Buscar por nombre, propiedad o teléfono…"
+                className="w-full rounded-xl border border-stroke bg-surface pl-10 pr-4 py-3 text-sm placeholder:text-fg-subtle focus:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-200 transition"
+              />
+            </div>
+
+            {filasFiltradas.length === 0 ? (
+              <div className="bg-surface rounded-card shadow-card p-8 text-center mt-3">
+                <p className="text-sm text-fg-muted">
+                  No se encontraron inquilinos con "{busqueda}"
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 mt-3">
+                {filasFiltradas.map((v) => (
+                  <InquilinoCard
+                    key={v.id}
+                    vinculacion={v}
+                    abierto={expandido === v.id}
+                    onToggle={() => setExpandido(expandido === v.id ? null : v.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
