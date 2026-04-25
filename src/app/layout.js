@@ -4,6 +4,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import NavBar from "./NavBar";
 import TopBar from "./TopBar";
+import PWAInstaller from "./PWAInstaller";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +29,7 @@ export default function RootLayout({ children }) {
           {children}
         </main>
         <NavBar />
+        <PWAInstaller />
         <Analytics />
         <SpeedInsights />
       </body>
