@@ -70,12 +70,36 @@ export default function Propietario() {
 
   async function confirmarPago(pagoId) {
     const { error } = await supabase.from("pagos").update({ estado: "confirmado" }).eq("id", pagoId);
-    if (!error) setPagos(pagos.map(p => p.id === pagoId ? { ...p, estado: "confirmado" } : p));
+    if (error) return;
+    setPagos(pagos.map(p => p.id === pagoId ? { ...p, estado: "confirmado" } : p));
+    enviarEmailPago(pagoId, "pago_confirmado");
   }
 
   async function rechazarPago(pagoId) {
     const { error } = await supabase.from("pagos").update({ estado: "rechazado" }).eq("id", pagoId);
-    if (!error) setPagos(pagos.map(p => p.id === pagoId ? { ...p, estado: "rechazado" } : p));
+    if (error) return;
+    setPagos(pagos.map(p => p.id === pagoId ? { ...p, estado: "rechazado" } : p));
+    enviarEmailPago(pagoId, "pago_rechazado");
+  }
+
+  async function enviarEmailPago(pagoId, tipo) {
+    const pago = pagos.find((p) => p.id === pagoId);
+    if (!pago) return;
+    const { data: inquilino } = await supabase
+      .from("perfiles")
+      .select("email")
+      .eq("id", pago.user_id)
+      .single();
+    if (!inquilino?.email) return;
+    fetch("/api/notificar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tipo,
+        email: inquilino.email,
+        data: { monto: pago.monto, metodo: pago.metodo },
+      }),
+    }).catch(() => {});
   }
 
   function iniciarEdicion(prop) {

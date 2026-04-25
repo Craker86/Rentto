@@ -82,6 +82,28 @@ export default function Vincular() {
       setMensaje("Error: " + error.message);
     } else {
       setMensaje("Vinculación exitosa");
+
+      // Avisar al propietario por email
+      if (propiedad.propietario_email) {
+        const { data: perfil } = await supabase
+          .from("perfiles")
+          .select("nombre")
+          .eq("id", session.user.id)
+          .single();
+        fetch("/api/notificar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tipo: "vinculacion_nueva",
+            email: propiedad.propietario_email,
+            data: {
+              inquilino_nombre: perfil?.nombre || "Un inquilino",
+              propiedad_nombre: propiedad.nombre,
+            },
+          }),
+        }).catch(() => {});
+      }
+
       setTimeout(() => router.push("/dashboard"), 1500);
     }
     setCargando(false);

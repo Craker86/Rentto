@@ -120,16 +120,21 @@ export default function Pagar() {
     if (error) {
       alert("Error al registrar el pago: " + error.message);
     } else {
-      await fetch("/api/notificar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          monto: propiedad.monto_mensual,
-          metodo: metodo.nombre,
-          fecha: new Date().toLocaleDateString("es-VE"),
-          emailPropietario: "jesusalcala86@gmail.com",
-        }),
-      });
+      if (propiedad.propietario_email) {
+        fetch("/api/notificar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tipo: "pago_creado",
+            email: propiedad.propietario_email,
+            data: {
+              monto: propiedad.monto_mensual,
+              metodo: metodo.nombre,
+              fecha: new Date().toLocaleDateString("es-VE"),
+            },
+          }),
+        }).catch(() => {});
+      }
       setReferencia("ALQ-" + Date.now().toString().slice(-8));
       setPagoExitoso(true);
     }
